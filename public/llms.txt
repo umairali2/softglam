@@ -1,0 +1,14 @@
+# Softglam
+
+Softglam is a category-flexible online shop for considered jewellery, eyewear and accessories designed for everyday use.
+
+## Primary pages
+
+- Home: /
+- Product discovery: /#new
+- Jewellery: /#jewellery
+- Eyewear: /#eyewear
+- Accessories: /#accessories
+- Brand approach: /#story
+
+Product details, prices and availability displayed by the live website are authoritative. Softglam does not permit checkout, account or administrative URLs to be indexed.
