@@ -1,4 +1,4 @@
-# Softglam Application Flows
+# SoftGlam Application Flows
 
 **Status:** Draft 1
 
@@ -65,37 +65,52 @@ flowchart TD
   C -->|No| D[Guest or sign in]
   C -->|Yes| E[Contact and address]
   D --> E
-  E --> F[Select shipping]
-  F --> G[Trusted server recalculates totals]
-  G --> H{Valid stock, price, promotion?}
+  E --> F[Select shipping and payment]
+  F --> G[Trusted server recalculates totals and eligibility]
+  G --> H{Valid stock, price, promotion, shipping, payment?}
   H -->|No| I[Explain changes and return to review]
-  H -->|Yes| J[Create checkout and payment session]
-  J --> K[Gateway payment UI]
-  K --> L{Gateway result}
-  L -->|Declined/cancelled| M[Retry or select another method]
-  L -->|Pending| N[Pending confirmation screen]
-  L -->|Client success| O[Wait for verified server status]
-  O --> P[Signed webhook processed idempotently]
-  N --> P
-  P --> Q{Payment confirmed?}
-  Q -->|No| M
-  Q -->|Yes| R[Confirm order and inventory]
-  R --> S[Send confirmation]
-  S --> T[Order confirmation page]
+  H -->|Yes| J{Payment method}
+  J -->|COD| K[Create pending COD order and reserve stock]
+  K --> L[Staff makes verification calls]
+  L --> M{Verified within fair window?}
+  M -->|No| N[Cancel or expire and release stock]
+  M -->|Yes| O[Confirm COD order and inventory]
+  J -->|Online| P[Create payment session]
+  P --> Q[Gateway payment UI]
+  Q --> R{Gateway result}
+  R -->|Declined/cancelled| S[Retry or select another method]
+  R -->|Pending| T[Pending confirmation screen]
+  R -->|Client success| U[Wait for verified server status]
+  U --> V[Signed webhook processed idempotently]
+  T --> V
+  V --> W{Payment confirmed?}
+  W -->|No| S
+  W -->|Yes| X[Confirm prepaid order and inventory]
+  O --> Y[Start delivery estimate and send confirmation]
+  X --> Y
+  Y --> Z[Order confirmation page]
 ```
 
 Rules:
 
+- Launch checkout accepts Karachi, Sindh delivery addresses and applies the approved rate/threshold in `PRD.md` section 1.9.
+- Shipping eligibility and price are recalculated by the trusted server before order/payment creation and snapshotted on confirmation.
+- The 1–2 business-day target starts after verified online payment or COD confirmation, not initial checkout submission.
+- COD is offered only when trusted-server rules permit it; pending verification reserves stock for the fair 24-hour window but is not fulfillable.
+- Two documented phone attempts precede eligible COD expiry, and customer-caused failures follow the reviewed escalation policy in `PRD.md` section 1.10.
+- Online payment uses the Safepay-hosted redirect for approved Pakistan-issued cards and contractually enabled mobile wallets; SoftGlam handles no card/wallet credentials.
+- Online payment reserves stock for 30 minutes. A late success after reservation release enters an inventory/payment exception rather than overselling.
 - A browser redirect never directly marks an order paid.
 - Duplicate requests/webhooks produce one payment/order effect.
 - If cart data changes, customer must review the new final total before payment.
+- If manual courier booking later identifies an address exception, staff holds and contacts the customer for an eligible alternative or cancels/refunds without adding a post-checkout surcharge.
 
 ## 4. Authentication Flow
 
 ```mermaid
 flowchart TD
   A[Login or registration] --> B{Action}
-  B -->|Register| C[Create Supabase Auth user]
+  B -->|Register| C[Create Laravel application user]
   C --> D[Verify email if required]
   D --> E[Create/load profile]
   B -->|Login| F[Authenticate]
@@ -172,7 +187,17 @@ flowchart TD
   Q --> R[Close and notify]
 ```
 
-Refund amount is computed from refundable paid amounts, prior refunds, discounts, shipping/tax policy, and returned quantity—not current catalog price.
+Rules:
+
+- Customer cancellation is available for eligible quantities before trusted courier handover/dispatch; packed status alone does not remove eligibility.
+- Launch products have no change-of-mind return. Wrong, missing, damaged, defective, expired, leaking, tampered, authenticity, and materially not-as-described issues remain reviewable under `PRD.md` section 1.11.
+- Visible delivery issues use 48-hour reporting guidance, without extinguishing latent-defect, warranty, outage, or non-waivable rights.
+- An unboxing video is optional, never a mandatory condition of support.
+- SoftGlam pays approved return/replacement transport for seller-, product-, packaging-, or courier-attributable issues.
+- Exchange is represented as a return/remedy plus a linked replacement order; the original order is not rewritten.
+- Prepaid refunds normally return to the original payment method. Collected COD refunds offer bank transfer or supported wallet; store credit is voluntary.
+- Refund amount is computed from refundable paid amounts, prior/pending refunds, discounts, shipping/tax policy, and returned quantity—not current catalog price.
+- Customer financial remedy and inventory disposition are separate decisions; opened/unsafe beauty is never restocked merely because a refund is approved.
 
 ## 8. Admin Product Publishing Flow
 
@@ -227,7 +252,36 @@ Admin defines discount type, eligibility, products/collections, customer scope, 
 - **Payment succeeded but webhook delayed:** show pending state; reconciliation retrieves provider status; never ask customer to pay again without checking.
 - **Webhook repeated/out of order:** store provider event ID and process safely; state machine rejects invalid regressions.
 - **Stock changed during checkout:** recalculate atomically, release invalid reservation, and return customer to review.
-- **Email failed:** order remains valid; notification is queued for retry and visible to staff.
+- **Resend/email failed:** the business transaction remains valid; the application-owned notification is queued for bounded retry, visible to staff, and never rerouted through personal email or an unapproved provider.
 - **Carrier unavailable:** permit authorized manual rate/tracking workflow if configured.
 - **Product unpublished after purchase:** historical order remains readable from immutable snapshots.
 - **Admin lacks permission:** deny on server, log relevant attempt, and show a safe access message.
+- **No active approved tax profile:** block production checkout; do not guess a rate or issue a document represented as a tax invoice.
+- **Tax/invoice configuration changes after order:** retain the confirmed order/document snapshot; apply changes only according to effective-date rules.
+- **Invoice integration delayed:** keep an explicit pending/failed transmission state, retry idempotently under the approved outage procedure, and never invent FBR acceptance.
+- **Issued invoice requires correction:** create a linked credit/debit note where required; never edit or delete the issued financial document.
+
+## 12. Tax and Invoice Flow
+
+```mermaid
+flowchart TD
+  A[Trusted order/payment/supply event] --> B{Active approved compliance profile?}
+  B -->|No in production| C[Block and alert compliance owner]
+  B -->|Yes| D[Calculate from immutable order snapshot]
+  D --> E{Document required now?}
+  E -->|No| F[Record pending trigger/state]
+  E -->|Yes| G[Create document idempotently]
+  G --> H{External FBR/integrator required?}
+  H -->|No| I[Issue approved document]
+  H -->|Yes| J[Transmit structured document]
+  J --> K{Accepted?}
+  K -->|No| L[Record failure and follow approved retry/outage path]
+  K -->|Yes| M[Store external number/QR/signature evidence]
+  M --> I
+  I --> N[Email and expose through secure order access]
+  N --> O{Later cancellation/return/value change?}
+  O -->|No| P[Retain immutable record]
+  O -->|Yes| Q[Issue linked credit/debit note as required]
+```
+
+Order acknowledgement, payment receipt, tax invoice, credit/debit note, and refund confirmation are separate records. Payment-intermediary or courier deductions are reconciled against settlements without changing the amount the customer paid.

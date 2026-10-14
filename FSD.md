@@ -1,4 +1,4 @@
-# Softglam Functional Specification Document
+# SoftGlam Functional Specification Document
 
 **Status:** Draft 1  
 **Scope:** MVP plus clearly marked post-MVP functions
@@ -74,19 +74,27 @@ The system shall maintain an anonymous or customer cart across navigation and pe
 The system shall collect contact, shipping address, shipping method, billing choice, and payment method through a guided checkout.
 
 - Required fields and supported destination are validated.
+- The launch method follows `PRD.md` section 1.9: Karachi only, Rs 300 standard shipping, free shipping from a discounted merchandise subtotal of Rs 5,000, and a 1–2 business-day target after confirmation.
 - Customer can review final items and total before payment.
 - Final totals are recalculated in trusted code.
 - Changed price, discount, stock, shipping, or tax requires explicit review.
+- Confirmed orders retain a shipping rule, charge, destination, and estimate snapshot; later configuration changes do not alter them.
 - Duplicate submission does not create duplicate charges or orders.
 
 ### SF-08 Payment and confirmation — P0
 
-The system shall create payment through an approved gateway and confirm the order only from a trusted provider result.
+The system shall support approved online payment and COD methods and confirm the order only from a trusted method-specific result.
 
-- Signed webhooks are verified and deduplicated.
-- Declined, cancelled, pending, and successful states have distinct user messages.
+- Online payment follows `PRD.md` section 1.13: Safepay-hosted redirect, PKR, approved Pakistan-issued cards and contractually enabled mobile wallets, no saved methods, and a 30-minute inventory reservation.
+- SoftGlam never receives or stores card number, CVV, wallet PIN/OTP, or bank credentials.
+- Signed/authenticated online-payment notifications are verified, amount/currency matched, deduplicated, and processed through idempotent state transitions; redirects are never proof of payment.
+- Live online payment remains disabled until Safepay merchant onboarding, full/partial API refunds, method coverage, settlement/reconciliation, security, and acceptance gates pass.
+- COD follows `PRD.md` section 1.10: eligible Karachi orders up to Rs 15,000, no additional COD fee, two manual verification-call attempts, fair 24-hour pending window, and inventory reservation while pending.
+- A COD submission remains `pending_cod_verification`; it does not start the delivery estimate or become fulfillable until authorized staff verifies it.
+- Expired, declined, rejected, or duplicate COD attempts release reservations idempotently.
+- Declined, cancelled, pending, expired, and successful states have distinct user messages.
 - Confirmation access requires an authenticated owner or a secure limited reference/token.
-- Confirmation includes order reference, summary, delivery destination summary, and next steps.
+- Confirmation includes order reference, payment/COD state, summary, delivery destination summary, and next steps.
 
 ### SF-09 Customer authentication — P0
 
@@ -124,12 +132,15 @@ Eligible customers shall submit one review per purchased item, subject to modera
 - Staff can approve, reject, hide, and respond with audit history.
 - Aggregate ratings include only approved reviews.
 
-### SF-14 Cancellation and returns — P1
+### SF-14 Cancellation and returns — P0/P1
 
-Customers shall request eligible cancellation/return/exchange with item quantities and reasons.
+Customers shall request eligible cancellation and, when the operational-maturity release enables it, return/remedy processing with item quantities and reasons.
 
-- Eligibility is calculated from state, fulfillment/delivery date, return window, and product rules.
-- Requests show progress and notifications.
+- P0 cancellation is available for eligible quantities before trusted courier handover/dispatch and follows `PRD.md` section 1.11.
+- P1 return/remedy eligibility follows the accepted policy version, fulfillment/delivery evidence, issue reason, product rules, prior remedies, and applicable rights.
+- Launch products have no change-of-mind return; eligible wrong, missing, damaged, defective, expired, leaking, tampered, authenticity, or materially not-as-described issues remain reviewable.
+- Visible delivery issues use 48-hour reporting guidance without automatically excluding latent defects, warranty issues, outages, or non-waivable rights.
+- Requests show progress, evidence requirements, decisions, remedy choices, and notifications.
 - The system prevents requested quantities exceeding purchased less prior returned/cancelled quantities.
 
 ### SF-15 Informational pages and contact — P0
@@ -160,9 +171,11 @@ Authorized staff shall view date-filtered KPIs and operational queues.
 
 Staff shall define reusable product types and typed attributes.
 
-- Supported types include text, number, boolean, date, single-select, multi-select, and measurement where implemented.
-- Staff can mark an attribute required, filterable, searchable, variant-driving, or display-only as applicable.
-- Attribute codes remain stable after use; destructive changes with data dependencies are blocked or migrated.
+- Supported types include short/long text, integer, decimal, boolean, date, single-select, multi-select, measurement, color swatch, and managed reference.
+- Staff can mark an attribute required, conditionally required, filterable, searchable, variant-driving, or display-only as applicable.
+- Attribute and allowed-value codes remain stable after use; destructive changes with data dependencies are blocked or migrated.
+- Launch product types, canonical units, controlled values, conditional requirements, filters, and publication rules follow the approved vocabulary in `PRD.md` section 1.8.
+- Product publication reports actionable validation errors and cannot bypass hard requirements by hiding fields.
 
 ### AD-04 Product management — P0
 
@@ -203,7 +216,10 @@ Staff shall create, preview, publish, unpublish, archive, duplicate, search, and
 ### AD-09 Fulfillment — P0
 
 - Authorized staff can create partial/full fulfillment against remaining quantities.
-- Carrier, service, tracking number/URL, dispatch date, and customer notification choice are supported.
+- Carrier, service, tracking number/URL, booking/handover date, and customer notification choice are supported.
+- Staff can place an unserviceable address on hold, record contact/alternative resolution, or cancel with full payment reversal according to policy without adding a post-checkout surcharge.
+- One coordinated delivery retry is supported without creating duplicate fulfillment or inventory movements.
+- Failed delivery and return-to-origin remain distinct from delivered and physically returned/inspected states.
 - Duplicate fulfillment beyond ordered quantity is rejected.
 - Fulfillment changes inventory/order states according to configured inventory timing.
 
@@ -249,7 +265,7 @@ Staff can filter pending/reported reviews, approve/reject/hide, and publish a st
 Owner-authorized staff can configure:
 
 - Business identity, support contacts, locations, timezone, order numbering
-- Currency display and tax behavior
+- Currency display and tax behavior under an approved, versioned compliance profile; production tax activation requires owner authorization and audit
 - Shipping zones, methods, rates, thresholds, and delivery messaging
 - Policy content and return windows
 - Notification sender/template configuration
@@ -274,11 +290,16 @@ Provider secrets are managed in protected deployment secret stores, not ordinary
 
 ### SY-01 Notifications — P0
 
-The system shall queue and track order confirmation, payment exception, fulfillment/tracking, cancellation, refund, return, verification, and password recovery notifications.
+The system shall queue and track authentication, order/COD confirmation, payment exception, fulfillment/tracking, cancellation, refund, return, verification, password recovery, and document-availability notifications under `PRD.md` section 1.14.
 
+- Resend is the primary transactional provider; Postmark is a reviewed replacement candidate, not an automatic runtime fallback.
+- Launch sends transactional email only from application-owned, version-controlled HTML/plain-text templates.
 - Notification failure never rolls back a valid financial/order transaction.
-- Retriable failures use bounded retries and become visible to staff.
-- Templates render from immutable event/order data and support test-send in non-production-safe ways.
+- Sends are idempotent by event/recipient/purpose; retriable failures use bounded retries and become visible to staff.
+- Signed provider webhooks update accepted, delivered, delayed, bounced, complained, rejected, failed, and suppressed states idempotently.
+- Open/click tracking is disabled; delivery does not prove that a customer read or acted on a message.
+- Documents use secure authorized links rather than routine attachments.
+- Templates render from immutable minimized event/order data and support controlled test-send to allowlisted non-production recipients.
 
 ### SY-02 Payment webhook handling — P0
 
@@ -308,6 +329,18 @@ Create audit events for authentication/security changes, catalog publication, pr
 ### SY-06 Analytics events — P0
 
 The system shall emit consistent events for view item/list, search, add/remove cart, begin checkout, shipping/payment step, purchase, refund, and return request. Purchase deduplication uses order/payment identity.
+
+### SY-07 Tax and customer documents — P0
+
+- Production ordering remains blocked until Pakistani business/tax registration and the compliance decisions in `PRD.md` section 1.12 are professionally approved.
+- Customer prices are tax-inclusive when an active adviser-approved profile determines that tax applies; checkout never adds an undisclosed product-tax amount above the advertised price.
+- The trusted backend calculates tax in integer minor units, preserves profile/class/rate/treatment and rounding snapshots, and ignores client-supplied tax values.
+- SoftGlam does not charge or label sales tax, display tax registration data, or claim FBR electronic-invoice status without valid approved registration/configuration.
+- Order acknowledgements, payment receipts, commercial receipts, tax invoices, advance-receipt invoices, credit/debit notes, and refund confirmations remain distinct document types.
+- Issued documents are immutable; cancellations, returns, refunds, and value corrections use linked notes where required rather than overwriting history.
+- Documents are delivered by email and secure account/guest order access with server-side authorization and accessible essential totals.
+- Invoice issuance/transmission is idempotent; external FBR/integrator states, failures, identifiers, QR/signature data, and corrections remain auditable.
+- Payment-intermediary/courier withholding and fees are reconciled separately from customer-facing order tax and paid totals.
 
 ## 5. Business Rules
 
@@ -345,7 +378,7 @@ The system shall emit consistent events for view item/list, search, add/remove c
 
 ### Security
 
-- All exposed Supabase tables have tested RLS.
+- Browsers have no direct database access; Laravel authorization policies, query scopes, and ownership boundaries are tested for every exposed resource.
 - Service credentials and provider secrets are absent from client bundles and logs.
 - Inputs are schema validated; abuse-prone endpoints are rate limited.
 - Staff MFA, least privilege, signed webhook validation, and audit records are in place before launch.
@@ -371,12 +404,12 @@ The system shall emit consistent events for view item/list, search, add/remove c
 ### Privacy and compliance
 
 - Collect only needed personal data and apply market-specific consent/retention rules.
-- Card data is handled by the payment provider, not stored by Softglam.
+- Card data is handled by the payment provider, not stored by SoftGlam.
 - Privacy export/deletion workflow preserves records legally required for finance, fraud, or disputes.
 
 ## 7. MVP Release Acceptance Scenarios
 
-1. Staff creates a new product type (for example eyewear), attributes, product, variants, media, price, and stock, then publishes it without code changes.
+1. Staff creates a product using a configured launch product type (for example makeup with shade variants), attributes, media, price, and stock, then publishes it without code changes.
 2. A visitor finds that product, selects an in-stock variant, completes payment once, and receives one confirmed order and notification.
 3. Two customers competing for the last unit cannot both receive confirmed stock.
 4. A repeated or out-of-order payment webhook does not duplicate an order, inventory movement, or notification.

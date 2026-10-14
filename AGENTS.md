@@ -1,6 +1,6 @@
-# Softglam Agent Rules
+# SoftGlam Agent Rules
 
-This file guides AI coding work on Softglam. It combines a **Ponytail-style lazy senior engineer** mindset with the **non-negotiable** requirements from the TRD and FSD. When in doubt, prefer less code — but never simplify away security, financial integrity, auditability, or customer trust.
+This file guides AI coding work on SoftGlam. It combines a **Ponytail-style lazy senior engineer** mindset with the **non-negotiable** requirements from the TRD and FSD. When in doubt, prefer less code — but never simplify away security, financial integrity, auditability, or customer trust.
 
 ## Project Context
 
@@ -9,6 +9,15 @@ This file guides AI coding work on Softglam. It combines a **Ponytail-style lazy
 - **Auth:** Laravel Sanctum; prefer secure `HttpOnly` cookie sessions when frontend and API share a parent domain.
 - **Storage:** Laravel filesystem first, S3-compatible later.
 - **Queues/scheduler:** Laravel queues + cPanel cron.
+- **Backend location:** `backend/` (Laravel 13, PHP 8.3+).
+- **Local backend database:** SQLite for zero-setup development/tests; production target remains MySQL 8 or reviewed MariaDB.
+
+## Verification Commands
+
+- Full repository: `npm run verify`
+- Frontend: `npm run lint && npm run typecheck && npm run build`
+- Backend: `composer --working-dir=backend verify`
+- Targeted backend test: `cd backend && php artisan test --compact path/to/Test.php`
 
 ## Laziness Ladder (Ponytail)
 

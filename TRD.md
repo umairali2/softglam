@@ -1,41 +1,57 @@
-# Softglam Technical Requirements Document
+# SoftGlam Technical Requirements Document
 
-**Status:** Draft 1  
-**Backend platform:** Supabase
+**Status:** Draft 2
+
+**Frontend:** Next.js 16 on Vercel
+
+**Backend:** Laravel REST API on cPanel
+
+**Database:** MySQL 8 or reviewed MariaDB equivalent
+
+**Architecture:** Modular monolith
 
 ## 1. Technical Objectives
 
 - Provide a secure, maintainable, category-agnostic commerce architecture.
 - Keep public storefront reads fast while preserving authoritative server-side pricing, inventory, and order logic.
-- Use Supabase capabilities without exposing privileged operations or service credentials to clients.
+- Use Laravel and MySQL capabilities without exposing privileged operations, database access, or service credentials to clients.
+- Keep the backend a modular monolith with explicit domain boundaries rather than premature microservices.
 - Make payments, webhooks, stock updates, and refunds idempotent and auditable.
 
 ## 2. Recommended Architecture
 
-### Web applications
+### Web application
 
-- **Storefront:** A server-rendering-capable TypeScript framework such as Next.js, deployed to a compatible managed platform.
-- **Admin:** A protected route group in the same application for MVP, or a separate application later if release/security boundaries require it.
+- **Storefront:** Next.js 16 with TypeScript, deployed to Vercel.
+- **Admin:** A protected route group in the same Next.js application for MVP; separation remains possible if future release or security boundaries justify it.
 - **UI:** Shared design tokens and accessible components; responsive images and forms with server validation.
+- **Trust boundary:** Browser and Next.js UI checks improve experience but never replace Laravel authorization.
 
-The final framework and hosting choice must be confirmed before implementation. The architecture must not depend on framework-only client checks for authorization.
+### Laravel application
 
-### Supabase services
+- **API:** Versioned REST endpoints with typed contracts, request validation, stable error codes, and controlled resource serialization.
+- **Domains:** Identity, access control, catalog, inventory, cart, pricing, discounts, checkout, orders, payments, fulfillment, returns, customers, reviews, content, notifications, reporting, and audit.
+- **Auth:** Laravel Sanctum with secure `HttpOnly` cookie sessions when the frontend and API share a parent domain.
+- **Authorization:** Middleware, policies, gates, and domain-level permission checks; database access is never exposed directly to browsers.
+- **Storage:** Laravel filesystem with public product media and private protected evidence; S3-compatible storage can replace the initial disk through the same abstraction.
+- **Queues:** Laravel queued jobs for email, image processing, reports, exports, and provider reconciliation.
+- **Scheduler:** Laravel Scheduler invoked by cPanel cron for reservation expiry, retries, reconciliation, cleanup, and lifecycle work.
 
-- **Postgres:** Source of truth for catalog, customers, inventory, carts, orders, and operations
-- **Auth:** Customer and staff identity; staff role assignments stored separately from user-controlled metadata
-- **Storage:** Product media, review media, and restricted return evidence with distinct buckets/policies
-- **Row Level Security:** Required on all schemas/tables accessible through Supabase APIs
-- **Edge Functions or trusted server runtime:** Checkout, payment sessions, webhooks, refunds, privileged admin commands, email triggers, and exports
-- **Realtime:** Optional for admin order/inventory updates; not required for core correctness
-- **Scheduled jobs:** Expire reservations, retry notifications, reconcile payments, refresh aggregates, and clean temporary records
+### Database and hosting
+
+- **MySQL:** Source of truth for catalog, customers, inventory, carts, orders, payments, and operations.
+- **Transactions and locks:** Required for inventory, checkout, payment, refund, and other concurrency-sensitive commands.
+- **Deployment:** Laravel API and database on a validated cPanel package; Next.js remains on Vercel.
+- **Environments:** Separate development, staging, and production applications, databases, credentials, and provider environments.
+- **Realtime:** Not required for core correctness; admin views may poll until a justified realtime provider is selected.
 
 ### External services
 
-- PCI-compliant payment gateway
-- Transactional email provider; optional SMS/WhatsApp provider
+- Safepay hosted checkout as the primary PKR online-payment integration target; PayFast is the commercial fallback if onboarding/acceptance fails
+- Resend for queued transactional email with application-owned templates and signed delivery webhooks; Postmark is the replacement candidate; optional SMS/WhatsApp requires later approval
 - Carrier/rate/tracking provider or manual fulfillment adapter
 - Analytics and error monitoring with privacy controls
+- FBR electronic-invoicing licensed integrator or PRAL where the approved registered profile requires it
 
 Adapters should isolate providers so they can be replaced without rewriting order logic.
 
@@ -83,9 +99,11 @@ Available stock is derived consistently from on-hand and active reservations. In
 - `discounts`, `discount_codes`, `discount_rules`, `discount_redemptions`
 - `checkout_sessions`: pricing snapshot, customer/contact, addresses, status, expiry
 - `shipping_zones`, `shipping_methods`, `shipping_rates`
-- `tax_rules` or an integration reference
+- `tax_profiles`, `tax_classes`, `tax_rates`, and effective-dated product/shipping assignments
+- `tax_calculations`, `financial_documents`, `financial_document_lines`, `document_transmissions`, and linked credit/debit notes
+- `settlement_deductions` for payment-intermediary/courier fees and withholding reconciliation
 
-Cart totals shown to clients are estimates. A trusted checkout command recalculates active price, eligibility, shipping, tax, and inventory.
+Cart totals shown to clients are estimates. A trusted checkout command recalculates active price, eligibility, shipping, tax, and inventory. Production checkout requires an effective owner-authorized compliance profile; tax and issued financial documents preserve immutable profile, classification, calculation, rounding, numbering, and external-transmission snapshots.
 
 ### Orders and payments
 
@@ -111,13 +129,13 @@ Do not rely on mutable catalog rows to display historical orders.
 
 ## 4. API and Command Boundaries
 
-### Safe direct reads
+### Public reads
 
-Public, published catalog/content data may be read through views or RPCs protected by RLS. Public views should expose only required fields and must not expose costs, internal notes, supplier data, or unpublished items.
+Public, published catalog/content data is served through Laravel API resources or trusted Next.js server requests. Queries and serializers must select only required public fields and must not expose costs, internal notes, supplier data, drafts, or unpublished items.
 
 ### Trusted commands
 
-The following must run in a trusted server or Edge Function:
+The following must run in the Laravel application:
 
 - Final price/tax/shipping calculation
 - Checkout creation and stock reservation
@@ -140,12 +158,12 @@ Commands must authenticate the actor, authorize permissions, validate input, exe
 
 ## 5. Authentication and Authorization
 
-- Supabase Auth for sessions; secure cookie-based server sessions preferred for SSR applications.
-- Email verification and password recovery; CAPTCHA/rate limits on abuse-prone endpoints.
-- MFA required for owners and administrators and recommended for all staff.
-- Never derive staff permission from editable client metadata or email domain alone.
-- RLS policies default to deny and explicitly allow ownership/publication/permitted staff access.
-- Service-role key only in trusted runtimes; never use `SUPABASE_SERVICE_ROLE_KEY` in browser bundles.
+- Laravel Sanctum provides sessions; secure `HttpOnly`, `Secure`, appropriately scoped cookie-based sessions are required when the frontend and API share a parent domain.
+- Email verification and password recovery use enumeration-safe messaging; CAPTCHA/rate limits protect abuse-prone endpoints.
+- MFA is required for owners and administrators and recommended for all staff.
+- Never derive staff permission from editable profile data or email domain alone.
+- Laravel middleware, policies, gates, query scoping, and domain checks default to deny and explicitly allow ownership, publication, or permitted staff access.
+- Database credentials, application keys, and provider secrets exist only in trusted server environments and never in browser bundles.
 - Step-up verification should be considered for refunds, role changes, exports, and sensitive settings.
 
 ## 6. Storage Design
@@ -155,7 +173,7 @@ Commands must authenticate the actor, authorize permissions, validate input, exe
 - `return-private`: customer-owner and authorized staff access only
 - Validate MIME type, size, extension, and image dimensions; randomize object paths.
 - Generate image variants and strip unnecessary metadata where supported.
-- Store object path/reference in Postgres, not expiring signed URLs.
+- Store the object path/reference in MySQL, not expiring signed URLs.
 
 ## 7. Payment Design
 
@@ -166,7 +184,7 @@ Commands must authenticate the actor, authorize permissions, validate input, exe
 5. A transaction updates payment/order state and inventory; asynchronous notifications follow.
 6. Reconciliation job finds stale/pending or mismatched records.
 
-The success redirect is not proof of payment. Raw card data, CVV, or unrestricted provider secrets must never reach Supabase tables or logs.
+The success redirect is not proof of payment. Raw card data, CVV, or unrestricted provider secrets must never reach SoftGlam databases or logs.
 
 ## 8. State and Concurrency Requirements
 
@@ -177,7 +195,7 @@ The success redirect is not proof of payment. Raw card data, CVV, or unrestricte
 
 ## 9. Search, SEO, and Performance
 
-- Begin with indexed Postgres full-text/trigram search if catalog size and relevance requirements permit; adopt a dedicated search service only when justified.
+- Begin with indexed MySQL full-text search and normalized searchable fields if catalog size and relevance requirements permit; adopt a dedicated search service only when justified.
 - Index publication status, slugs, category joins, SKU, order number, normalized email, statuses, timestamps, and common admin filters.
 - Avoid N+1 queries; use purpose-built views/RPCs for listing cards and admin reports.
 - Cache only public catalog/content; purge or revalidate on publish, price, or stock events.
@@ -190,11 +208,11 @@ The success redirect is not proof of payment. Raw card data, CVV, or unrestricte
 - Monitor frontend/server errors, function failure rate, webhook failures, payment discrepancies, notification failures, database utilization, and low stock.
 - Alerts must route to an owned operational channel with documented severity and response.
 - Maintain dashboards for checkout/payment success, webhook lag, failed jobs, and order exceptions.
-- Use separate development, staging, and production Supabase projects.
+- Use separate development, staging, and production applications, databases, credentials, storage, and provider environments.
 
 ## 11. Migrations, Backups, and Data Lifecycle
 
-- All schema, RLS, functions, and seed/reference data changes use versioned migrations committed to source control.
+- All schema, constraints, indexes, database routines, and seed/reference data changes use versioned Laravel migrations or seeders committed to source control.
 - Do not make untracked production schema edits.
 - Enable platform backups appropriate to business recovery targets and periodically test restoration.
 - Define retention/anonymization rules for carts, logs, exports, return evidence, and personal data.
@@ -203,7 +221,7 @@ The success redirect is not proof of payment. Raw card data, CVV, or unrestricte
 ## 12. Testing Strategy
 
 - **Unit:** pricing, discount eligibility, tax/shipping rules, state transitions, permissions
-- **Database:** constraints, RLS policies by role, atomic inventory behavior, migration tests
+- **Database:** constraints, indexes, ownership/permission query boundaries, atomic inventory behavior, and migration tests
 - **Integration:** payment and webhook idempotency, refund, email, storage, carrier adapter
 - **End-to-end:** browse-to-purchase, declined payment, duplicate webhook, cancellation, fulfillment, return/refund, and staff permissions
 - **Non-functional:** accessibility, performance budgets, security scanning, rate limits, concurrency/oversell, backup restore
@@ -216,7 +234,7 @@ Use provider sandbox environments. Production-like tests must use synthetic cust
 - Preview environment for web changes; staging validation before production
 - Backward-compatible schema changes for zero/low-downtime deployment
 - Deployment records, controlled environment variables, and rollback/runbook procedures
-- Secrets in hosting/Supabase secret management, never committed to source control
+- Secrets in Vercel and cPanel protected environment configuration, never committed to source control
 
 ## 14. Initial Service Targets
 
@@ -231,9 +249,12 @@ These are launch targets to refine with business needs:
 
 ## 15. Technical Decisions Still Required
 
-- Frontend framework, hosting, package manager, and test suite
-- Payment, tax, email, analytics, monitoring, and carrier providers
-- Stock reservation duration and payment authorization/capture policy
+- Final cPanel package and its PHP, MySQL/MariaDB, cron, queue, backup, logging, and resource capabilities
+- Package manager and frontend/backend test libraries
+- Safepay merchant contract/onboarding, named wallet/card capability, authorization/capture model, fees/withholding, settlement, API refunds, and acceptance evidence; PayFast remains the fallback candidate
+- Tax/FBR, analytics, monitoring, and future carrier providers
+- Final domain ownership plus Resend account/plan, SPF/DKIM/DMARC, support mailbox, webhook, data-processing, queue-capacity, and acceptance evidence
+- Provider compatibility with the approved 30-minute online-payment reservation and late-success recovery policy
 - Search implementation and expected catalog/order volume
-- Launch-region compliance and data residency needs
+- Pakistan-specific compliance, tax/invoice, consent, retention, and data residency requirements
 - Recovery objectives and operational alert ownership

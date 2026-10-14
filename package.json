@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "backend:test": "composer --working-dir=backend test",
+    "backend:lint": "composer --working-dir=backend lint",
+    "verify": "npm run lint && npm run typecheck && npm run build && npm run backend:lint && npm run backend:test"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
