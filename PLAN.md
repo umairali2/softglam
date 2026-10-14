@@ -100,6 +100,7 @@ A feature is not complete when only its UI exists. It is complete after applicab
 
 - Laravel 13 API exists under `backend/` with Sanctum, UUID users/tokens, versioned `/api/v1` routing, request correlation IDs, and a tested health endpoint.
 - Catalog foundation includes UUID brands, product types, attribute definitions, hierarchical categories, products, variants, assignments/values, deterministic launch taxonomy seeds, and public published-product endpoints.
+- Inventory foundation includes a seeded Karachi location, per-variant balances, safe availability, atomic manual adjustments, required actor/reason attribution, and immutable movement history.
 - Root `npm run verify` runs frontend lint/typecheck/build and backend formatting/tests successfully.
 - Local and test backend use SQLite for zero-setup development; production remains MySQL/MariaDB and requires dedicated compatibility testing.
 
@@ -208,11 +209,11 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Single-location inventory
 
-- [ ] `INV-001` Location, inventory item, and low-stock threshold model — **Not started**
-- [ ] `INV-002` On-hand, reserved, and available stock calculations — **Not started**
-- [ ] `INV-003` Atomic manual adjustment with required reason and actor — **Not started**
-- [ ] `INV-004` Append-only inventory movement history — **Not started**
-- [ ] `INV-005` Low-stock and inventory reconciliation views — **Not started**
+- [x] `INV-001` Location, inventory item, and low-stock threshold model — **Complete**
+- [x] `INV-002` On-hand, reserved, and available stock calculations — **Complete**
+- [x] `INV-003` Atomic manual adjustment with required reason and actor — **Complete**
+- [x] `INV-004` Append-only inventory movement history — **Complete**
+- [ ] `INV-005` Low-stock and inventory reconciliation views — **In progress: low-stock calculation implemented; admin view/reconciliation pending**
 
 ### Public catalog and search
 

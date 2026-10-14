@@ -40,6 +40,8 @@ class ProductController extends Controller
                     ->sellable()
                     ->orderByDesc('is_default')
                     ->orderBy('id'),
+                'variants.inventoryItems:id,product_variant_id,location_id,on_hand,reserved',
+                'variants.inventoryItems.location:id,is_active',
             ]);
     }
 }

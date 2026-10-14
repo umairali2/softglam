@@ -4,6 +4,8 @@ namespace Tests\Feature\Api\V1;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\InventoryItem;
+use App\Models\Location;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\ProductVariant;
@@ -85,6 +87,25 @@ class ProductControllerTest extends TestCase
             ->assertJsonPath('data.variants.0.price.compare_at_amount', 300000)
             ->assertJsonPath('data.variants.0.price.currency', 'PKR')
             ->assertJsonMissingPath('data.brand.website_url');
+    }
+
+    public function test_show_exposes_safe_availability_without_inventory_quantities(): void
+    {
+        $product = Product::factory()->published()->create(['slug' => 'limited-product']);
+        $productVariant = ProductVariant::factory()->for($product)->create();
+        InventoryItem::factory()->for($productVariant)->for(Location::factory())->create([
+            'on_hand' => 4,
+            'reserved' => 4,
+        ]);
+
+        $response = $this->getJson('/api/v1/products/limited-product');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.variants.0.availability.status', 'out_of_stock')
+            ->assertJsonMissingPath('data.variants.0.availability.quantity')
+            ->assertJsonMissingPath('data.variants.0.availability.on_hand')
+            ->assertJsonMissingPath('data.variants.0.availability.reserved');
     }
 
     public function test_show_returns_404_for_an_unpublished_product(): void
