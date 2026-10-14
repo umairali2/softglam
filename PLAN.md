@@ -99,6 +99,7 @@ A feature is not complete when only its UI exists. It is complete after applicab
 ### Implementation status
 
 - Laravel 13 API exists under `backend/` with Sanctum, UUID users/tokens, versioned `/api/v1` routing, request correlation IDs, and a tested health endpoint.
+- Catalog foundation includes UUID brands, product types, attribute definitions, hierarchical categories, products, variants, assignments/values, deterministic launch taxonomy seeds, and public published-product endpoints.
 - Root `npm run verify` runs frontend lint/typecheck/build and backend formatting/tests successfully.
 - Local and test backend use SQLite for zero-setup development; production remains MySQL/MariaDB and requires dedicated compatibility testing.
 
@@ -196,11 +197,11 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Configurable catalog
 
-- [ ] `CAT-001` Product types and typed attribute definitions — **Not started**
-- [ ] `CAT-002` Product-type attribute assignment, validation, and ordering — **Not started**
-- [ ] `CAT-003` Brands, hierarchical categories, and manual collections — **Not started**
-- [ ] `CAT-004` Product draft, description, tags, SEO, and publication state — **Not started**
-- [ ] `CAT-005` Product options, values, variants, SKU, barcode, price, cost, weight, and dimensions — **Not started**
+- [ ] `CAT-001` Product types and typed attribute definitions — **In progress: UUID schema, models, and launch product-type seeds implemented**
+- [ ] `CAT-002` Product-type attribute assignment, validation, and ordering — **In progress: assignment schema and ordering implemented**
+- [ ] `CAT-003` Brands, hierarchical categories, and manual collections — **In progress: brand/category schema and launch hierarchy seeds implemented; collections pending**
+- [ ] `CAT-004` Product draft, description, tags, SEO, and publication state — **In progress: draft/active/archive foundation and public publication scope implemented**
+- [ ] `CAT-005` Product options, values, variants, SKU, barcode, price, cost, weight, and dimensions — **In progress: variant/SKU/PKR price/weight foundation implemented; options and dimensions pending**
 - [ ] `CAT-006` Product media upload, validation, alt text, assignment, and ordering — **Not started**
 - [ ] `CAT-007` Related products, preview, publish, unpublish, archive, and duplicate — **Not started**
 - [ ] `CAT-008` Publish validation, unique slugs/SKUs, redirects, and audit events — **Not started**
