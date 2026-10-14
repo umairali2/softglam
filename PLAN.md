@@ -101,6 +101,7 @@ A feature is not complete when only its UI exists. It is complete after applicab
 - Laravel 13 API exists under `backend/` with Sanctum, UUID users/tokens, versioned `/api/v1` routing, request correlation IDs, and a tested health endpoint.
 - Catalog foundation includes UUID brands, product types, attribute definitions, hierarchical categories, products, variants, assignments/values, deterministic launch taxonomy seeds, and public published-product endpoints.
 - Inventory foundation includes a seeded Karachi location, per-variant balances, safe availability, atomic manual adjustments, required actor/reason attribution, and immutable movement history.
+- Customer authentication includes registration, login, logout, current-user access, secure Sanctum cookie sessions, normalized credentials, and throttling.
 - Root `npm run verify` runs frontend lint/typecheck/build and backend formatting/tests successfully.
 - Local and test backend use SQLite for zero-setup development; production remains MySQL/MariaDB and requires dedicated compatibility testing.
 
@@ -241,10 +242,10 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Customer authentication
 
-- [ ] `AUTH-001` Registration and email verification — **Not started**
-- [ ] `AUTH-002` Login, logout, intended-destination return, and secure cookie sessions — **Not started**
+- [ ] `AUTH-001` Registration and email verification — **In progress: registration complete; verification pending**
+- [ ] `AUTH-002` Login, logout, intended-destination return, and secure cookie sessions — **In progress: backend session flow complete; frontend return flow pending**
 - [ ] `AUTH-003` Enumeration-safe password recovery — **Not started**
-- [ ] `AUTH-004` Authentication throttling and security events — **Not started**
+- [ ] `AUTH-004` Authentication throttling and security events — **In progress: endpoint throttling complete; security events pending**
 
 ### Customer profile
 
