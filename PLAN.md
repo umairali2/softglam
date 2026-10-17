@@ -242,9 +242,9 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Customer authentication
 
-- [ ] `AUTH-001` Registration and email verification — **In progress: registration complete; verification pending**
+- [ ] `AUTH-001` Registration and email verification — **In progress: backend registration and verification complete; frontend pages pending**
 - [ ] `AUTH-002` Login, logout, intended-destination return, and secure cookie sessions — **In progress: backend session flow complete; frontend return flow pending**
-- [ ] `AUTH-003` Enumeration-safe password recovery — **Not started**
+- [ ] `AUTH-003` Enumeration-safe password recovery — **In progress: backend complete; frontend pages pending**
 - [ ] `AUTH-004` Authentication throttling and security events — **In progress: endpoint throttling complete; security events pending**
 
 ### Customer profile
