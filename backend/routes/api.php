@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Auth\SessionController;
+use App\Http\Controllers\Api\V1\CustomerAddressController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -29,5 +30,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->middleware('throttle:6,1')
                 ->name('verification.send');
         });
+    });
+
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::apiResource('me/addresses', CustomerAddressController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->names('me.addresses');
     });
 });

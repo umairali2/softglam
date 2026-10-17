@@ -250,8 +250,8 @@ Use this checklist in the implementing issue or pull request for every feature:
 ### Customer profile
 
 - [ ] `ACC-001` Account overview and profile editing — **Not started**
-- [ ] `ACC-002` Address create, edit, delete, validation, and default selection — **Not started**
-- [ ] `ACC-003` Ownership authorization and privacy-request foundation — **Not started**
+- [ ] `ACC-002` Address create, edit, delete, validation, and default selection — **In progress: backend complete; frontend pending**
+- [ ] `ACC-003` Ownership authorization and privacy-request foundation — **In progress: per-user address scoping enforced; privacy requests pending**
 
 ### Cart
 
