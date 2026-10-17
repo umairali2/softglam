@@ -5,9 +5,12 @@ use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Auth\SessionController;
+use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\CustomerAddressController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Middleware\ResolveCart;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
@@ -30,6 +33,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->middleware('throttle:6,1')
                 ->name('verification.send');
         });
+    });
+
+    Route::middleware(ResolveCart::class)->group(function (): void {
+        Route::get('cart', [CartController::class, 'show'])->name('cart.show');
+        Route::post('cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
+        Route::match(['put', 'patch'], 'cart/items/{item}', [CartItemController::class, 'update'])->name('cart.items.update');
+        Route::delete('cart/items/{item}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {

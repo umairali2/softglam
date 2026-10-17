@@ -29,6 +29,17 @@ class ProductVariant extends Model
         return $this->hasMany(InventoryItem::class);
     }
 
+    public function availableQuantity(): int
+    {
+        $items = $this->relationLoaded('inventoryItems')
+            ? $this->inventoryItems
+            : $this->inventoryItems()->with('location:id,is_active')->get();
+
+        return $items
+            ->filter(fn (InventoryItem $item): bool => $item->location->is_active)
+            ->sum(fn (InventoryItem $item): int => $item->availableQuantity());
+    }
+
     #[Scope]
     protected function sellable(Builder $query): Builder
     {

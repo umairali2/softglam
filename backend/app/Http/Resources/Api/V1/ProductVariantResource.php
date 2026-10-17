@@ -25,13 +25,9 @@ class ProductVariantResource extends JsonResource
             ],
             'weight_g' => $this->weight_g,
             'is_default' => $this->is_default,
-            'availability' => $this->whenLoaded('inventoryItems', function (): array {
-                $availableQuantity = $this->inventoryItems
-                    ->filter(fn ($inventoryItem): bool => $inventoryItem->location->is_active)
-                    ->sum(fn ($inventoryItem): int => $inventoryItem->availableQuantity());
-
-                return ['status' => $availableQuantity > 0 ? 'in_stock' : 'out_of_stock'];
-            }),
+            'availability' => $this->whenLoaded('inventoryItems', fn (): array => [
+                'status' => $this->availableQuantity() > 0 ? 'in_stock' : 'out_of_stock',
+            ]),
         ];
     }
 }

@@ -255,11 +255,11 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Cart
 
-- [ ] `CART-001` Anonymous cart and secure persistent cart token — **Not started**
-- [ ] `CART-002` Add, update quantity, remove, and save for later — **Not started**
-- [ ] `CART-003` Variant, price, quantity, and stock revalidation — **Not started**
-- [ ] `CART-004` Customer cart and safe anonymous-cart merge — **Not started**
-- [ ] `CART-005` Cart summary, estimated shipping, expiration, and recovery states — **Not started**
+- [ ] `CART-001` Anonymous cart and secure persistent cart token — **In progress: backend complete; frontend pending**
+- [ ] `CART-002` Add, update quantity, remove, and save for later — **In progress: backend complete except save-for-later; frontend pending**
+- [ ] `CART-003` Variant, price, quantity, and stock revalidation — **In progress: add/update stock checks done; checkout revalidation pending**
+- [ ] `CART-004` Customer cart and safe anonymous-cart merge — **In progress: customer cart done; guest merge on login pending**
+- [ ] `CART-005` Cart summary, estimated shipping, expiration, and recovery states — **In progress: subtotal done; shipping estimate/expiration pending**
 
 ### Wishlist
 
