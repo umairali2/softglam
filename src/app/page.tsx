@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { ArrowIcon, SparkIcon } from "@/components/icons";
-import { collections, products } from "@/lib/catalog";
+import { collections } from "@/lib/catalog";
+import { listProducts, type ApiProduct } from "@/lib/api";
+import { formatPkr } from "@/lib/money";
+
+const toneFor = (product: ApiProduct, index: number) => {
+  const category = product.categories[0]?.slug;
+  if (category === "jewellery") return "warm";
+  if (category === "beauty") return "cool";
+  return ["sand", "pearl", "clay", "ink"][index % 4];
+};
 import { siteConfig } from "@/lib/site";
 
 const jsonLd = {
@@ -16,7 +25,11 @@ const jsonLd = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const products = await listProducts()
+    .then((response) => response.data)
+    .catch(() => [] as ApiProduct[]);
+
   return <main id="main">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <section className="hero">
@@ -64,19 +77,23 @@ export default function Home() {
         <Link className="text-link desktop-link" href="#new">Shop new arrivals <ArrowIcon /></Link>
       </div>
       <div className="product-grid">
-        {products.map((product, index) => <article className="product-card" key={product.name}>
-          <Link href="#" aria-label={`View ${product.name}`}>
-            <div className={`product-art product-${product.tone}`}>
-              {product.badge && <span className="badge">{product.badge}</span>}
-              <span className={`product-object product-object-${index + 1}`} />
-              <span className="quick-add">Quick view</span>
-            </div>
-            <div className="product-info">
-              <div><h3>{product.name}</h3><p>{product.category}</p></div>
-              <span>{product.price}</span>
-            </div>
-          </Link>
-        </article>)}
+        {products.length === 0 && <p>New pieces are on their way. Please check back soon.</p>}
+        {products.map((product, index) => {
+          const variant = product.variants.find((v) => v.is_default) ?? product.variants[0];
+          return <article className="product-card" key={product.id}>
+            <Link href={`/products/${product.slug}`} aria-label={`View ${product.title}`}>
+              <div className={`product-art product-${toneFor(product, index)}`}>
+                {variant?.availability?.status === "out_of_stock" && <span className="badge">Sold out</span>}
+                <span className={`product-object product-object-${(index % 4) + 1}`} />
+                <span className="quick-add">Quick view</span>
+              </div>
+              <div className="product-info">
+                <div><h3>{product.title}</h3><p>{product.categories[0]?.name ?? product.brand?.name}</p></div>
+                {variant && <span>{formatPkr(variant.price.amount)}</span>}
+              </div>
+            </Link>
+          </article>;
+        })}
       </div>
     </section>
 

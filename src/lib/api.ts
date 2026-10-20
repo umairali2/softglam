@@ -1,0 +1,129 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const APP_URL = API_URL.replace(/\/api\/v1\/?$/, "");
+
+export type Money = { amount: number; currency: string };
+
+export type ApiProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  short_description: string | null;
+  brand: { name: string; slug: string } | null;
+  categories: { name: string; slug: string }[];
+  variants: ApiVariant[];
+};
+
+export type ApiVariant = {
+  id: string;
+  sku: string;
+  title: string | null;
+  price: { amount: number; compare_at_amount: number | null; currency: string };
+  availability?: { status: "in_stock" | "out_of_stock" };
+  is_default: boolean;
+};
+
+export type CartItem = {
+  id: string;
+  quantity: number;
+  unit_price: Money;
+  line_total: Money;
+  variant: {
+    id: string;
+    sku: string;
+    title: string | null;
+    in_stock: boolean;
+    product: { slug: string; title: string };
+  };
+};
+
+export type Cart = {
+  id: string;
+  items: CartItem[];
+  totals: { item_count: number; subtotal_amount: number; currency: string };
+};
+
+export type Order = {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_method: string;
+  totals: { subtotal_amount: number; shipping_amount: number; total_amount: number; currency: string };
+};
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public errors?: Record<string, string[]>,
+  ) {
+    super(message);
+  }
+}
+
+async function parseResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(response.status, body?.message ?? `Request failed (${response.status})`, body?.errors);
+  }
+  if (response.status === 204) return undefined as T;
+  return (await response.json()) as T;
+}
+
+let csrfPromise: Promise<void> | null = null;
+
+async function ensureCsrfCookie(): Promise<void> {
+  if (typeof document === "undefined") return;
+  if (document.cookie.includes("XSRF-TOKEN=")) return;
+  csrfPromise ??= fetch(`${APP_URL}/sanctum/csrf-cookie`, { credentials: "include" }).then(() => undefined);
+  await csrfPromise;
+  csrfPromise = null;
+}
+
+function xsrfHeader(): Record<string, string> {
+  const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+  return match ? { "X-XSRF-TOKEN": decodeURIComponent(match[1]) } : {};
+}
+
+export async function apiGet<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, { credentials: "include", cache: "no-store" });
+  return parseResponse<T>(response);
+}
+
+export async function apiSend<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
+  await ensureCsrfCookie();
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...xsrfHeader() },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return parseResponse<T>(response);
+}
+
+// Catalog
+export const listProducts = () => apiGet<{ data: ApiProduct[] }>("/products");
+export const getProduct = (slug: string) => apiGet<{ data: ApiProduct }>(`/products/${slug}`);
+
+// Cart (cookie-session based)
+export const getCart = () => apiGet<{ data: Cart }>("/cart");
+export const addCartItem = (product_variant_id: string, quantity: number) =>
+  apiSend<{ data: Cart }>("POST", "/cart/items", { product_variant_id, quantity });
+export const updateCartItem = (itemId: string, quantity: number) =>
+  apiSend<{ data: Cart }>("PATCH", `/cart/items/${itemId}`, { quantity });
+export const removeCartItem = (itemId: string) => apiSend<void>("DELETE", `/cart/items/${itemId}`);
+
+// Checkout
+export const checkoutCod = (payload: {
+  contact_email: string;
+  contact_phone: string;
+  address: {
+    recipient_name: string;
+    phone: string;
+    line1: string;
+    line2?: string;
+    area?: string;
+    city: string;
+    postal_code?: string;
+  };
+}) => apiSend<{ data: Order }>("POST", "/checkout", payload);
