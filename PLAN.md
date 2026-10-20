@@ -293,7 +293,7 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 - [ ] `COD-001` COD payment state model and availability rules — **In progress: pending_verification state and placement done**
 - [ ] `COD-002` Maximum-value and shipping-zone restrictions — **In progress: Rs 15,000 cap done; zone restrictions pending**
-- [ ] `COD-003` Admin verification queue, notes, confirmation, and rejection — **Not started**
+- [ ] `COD-003` Admin verification queue, notes, confirmation, and rejection — **In progress: staff queue + confirm/decline done; admin UI pending**
 - [ ] `COD-004` Cancellation/refusal reasons and COD operational analytics — **Not started**
 
 ### Orders

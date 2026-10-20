@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\OrderVerificationController as AdminOrderVerificationController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
@@ -51,5 +52,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->only(['index', 'store', 'update', 'destroy'])
             ->names('me.addresses');
         Route::get('me/orders', [OrderController::class, 'index'])->name('me.orders.index');
+
+        Route::prefix('admin')->name('admin.')->middleware('staff')->group(function (): void {
+            Route::get('orders', [AdminOrderVerificationController::class, 'index'])->name('orders.index');
+            Route::post('orders/{order}/confirm', [AdminOrderVerificationController::class, 'confirm'])->name('orders.confirm');
+            Route::post('orders/{order}/decline', [AdminOrderVerificationController::class, 'decline'])->name('orders.decline');
+        });
     });
 });
