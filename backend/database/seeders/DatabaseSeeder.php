@@ -18,5 +18,9 @@ class DatabaseSeeder extends Seeder
             CatalogReferenceSeeder::class,
             InventoryReferenceSeeder::class,
         ]);
+
+        if (app()->environment('local')) {
+            $this->call(DemoCatalogSeeder::class);
+        }
     }
 }
