@@ -43,12 +43,36 @@ export type Cart = {
   totals: { item_count: number; subtotal_amount: number; currency: string };
 };
 
+export type OrderItem = {
+  id: string;
+  sku: string;
+  product_title: string;
+  variant_title: string | null;
+  quantity: number;
+  unit_price: Money;
+  line_total: Money;
+};
+
 export type Order = {
   id: string;
   order_number: string;
   status: string;
   payment_method: string;
+  contact_email: string;
+  contact_phone: string;
+  shipping_address: {
+    recipient_name: string;
+    phone: string;
+    line1: string;
+    line2?: string | null;
+    area?: string | null;
+    city: string;
+    postal_code?: string | null;
+  };
+  items: OrderItem[];
   totals: { subtotal_amount: number; shipping_amount: number; total_amount: number; currency: string };
+  verification_deadline_at: string | null;
+  created_at: string | null;
 };
 
 export class ApiError extends Error {
@@ -127,3 +151,6 @@ export const checkoutCod = (payload: {
     postal_code?: string;
   };
 }) => apiSend<{ data: Order }>("POST", "/checkout", payload);
+
+// Orders
+export const getOrder = (orderNumber: string) => apiGet<{ data: Order }>(`/orders/${orderNumber}`);
