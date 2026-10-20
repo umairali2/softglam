@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Auth\SessionController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CartItemController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CustomerAddressController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -40,6 +41,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
         Route::match(['put', 'patch'], 'cart/items/{item}', [CartItemController::class, 'update'])->name('cart.items.update');
         Route::delete('cart/items/{item}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
+        Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {

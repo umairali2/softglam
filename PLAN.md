@@ -281,25 +281,25 @@ Use this checklist in the implementing issue or pull request for every feature:
 
 ### Checkout
 
-- [ ] `CHK-001` Expiring checkout session and server-authoritative totals — **Not started**
-- [ ] `CHK-002` Guest and authenticated contact/address flow with Pakistani phone validation — **Not started**
-- [ ] `CHK-003` Saved address, shipping method, payment method, and billing choice — **Not started**
-- [ ] `CHK-004` Atomic stock reservation and reservation expiry — **Not started**
-- [ ] `CHK-005` Final review, terms acceptance, and changed-price/stock recovery — **Not started**
-- [ ] `CHK-006` Idempotent submission and duplicate-order prevention — **Not started**
+- [ ] `CHK-001` Expiring checkout session and server-authoritative totals — **In progress: server-authoritative totals done; session expiry pending**
+- [ ] `CHK-002` Guest and authenticated contact/address flow with Pakistani phone validation — **In progress: guest/auth contact+address done; strict PK phone format pending**
+- [ ] `CHK-003` Saved address, shipping method, payment method, and billing choice — **In progress: saved/inline address done; billing choice pending**
+- [ ] `CHK-004` Atomic stock reservation and reservation expiry — **In progress: atomic reservation done; expiry/release pending**
+- [ ] `CHK-005` Final review, terms acceptance, and changed-price/stock recovery — **In progress: stock revalidation done; terms/price-change UX pending**
+- [ ] `CHK-006` Idempotent submission and duplicate-order prevention — **In progress: cart-scoped idempotency done; frontend pending**
 - [ ] `CHK-007` Optional post-purchase account creation for guests — **Not started**
 
 ### COD
 
-- [ ] `COD-001` COD payment state model and availability rules — **Not started**
-- [ ] `COD-002` Maximum-value and shipping-zone restrictions — **Not started**
+- [ ] `COD-001` COD payment state model and availability rules — **In progress: pending_verification state and placement done**
+- [ ] `COD-002` Maximum-value and shipping-zone restrictions — **In progress: Rs 15,000 cap done; zone restrictions pending**
 - [ ] `COD-003` Admin verification queue, notes, confirmation, and rejection — **Not started**
 - [ ] `COD-004` Cancellation/refusal reasons and COD operational analytics — **Not started**
 
 ### Orders
 
-- [ ] `ORD-001` Customer-safe order number and order state machine — **Not started**
-- [ ] `ORD-002` Immutable product, variant, price, adjustment, and address snapshots — **Not started**
+- [ ] `ORD-001` Customer-safe order number and order state machine — **In progress: number + initial states done; transition enforcement pending**
+- [ ] `ORD-002` Immutable product, variant, price, adjustment, and address snapshots — **In progress: item/price/address snapshots done**
 - [ ] `ORD-003` Order timeline and audit events — **Not started**
 - [ ] `ORD-004` Customer order history and order detail — **Not started**
 - [ ] `ORD-005` Secure guest confirmation and order access — **Not started**
