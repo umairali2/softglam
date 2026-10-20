@@ -21,8 +21,8 @@ export function Header() {
         </nav>
         <div className="header-actions">
           <button className="icon-button search-button" aria-label="Search"><SearchIcon /></button>
-          <Link className="icon-button account-button" href="#account" aria-label="Your account"><UserIcon /></Link>
-          <Link className="icon-button bag-button" href="#bag" aria-label="Shopping bag"><BagIcon /><span>0</span></Link>
+          <Link className="icon-button account-button" href="/account" aria-label="Your account"><UserIcon /></Link>
+          <Link className="icon-button bag-button" href="/cart" aria-label="Shopping bag"><BagIcon /></Link>
         </div>
       </div>
     </header>

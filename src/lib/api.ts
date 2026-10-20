@@ -154,3 +154,24 @@ export const checkoutCod = (payload: {
 
 // Orders
 export const getOrder = (orderNumber: string) => apiGet<{ data: Order }>(`/orders/${orderNumber}`);
+export const listMyOrders = () => apiGet<{ data: Order[] }>("/me/orders");
+
+// Auth
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  is_staff: boolean;
+};
+
+export const getUser = () => apiGet<{ data: AuthUser }>("/auth/user");
+export const register = (payload: { name: string; email: string; password: string; password_confirmation: string }) =>
+  apiSend<{ data: AuthUser }>("POST", "/auth/register", payload);
+export const login = (payload: { email: string; password: string }) =>
+  apiSend<{ data: AuthUser }>("POST", "/auth/login", payload);
+export const logout = () => apiSend<void>("POST", "/auth/logout");
+export const forgotPassword = (email: string) =>
+  apiSend<{ data: { message: string } }>("POST", "/auth/forgot-password", { email });
+export const resetPassword = (payload: { token: string; email: string; password: string; password_confirmation: string }) =>
+  apiSend<{ data: { status: string } }>("POST", "/auth/reset-password", payload);
