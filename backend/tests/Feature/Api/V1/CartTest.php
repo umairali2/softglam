@@ -185,4 +185,89 @@ class CartTest extends TestCase
             ->assertJsonPath('data.totals.subtotal_amount', 0)
             ->assertJsonCount(0, 'data.items');
     }
+
+    public function test_guest_cart_merges_into_customer_cart_on_login(): void
+    {
+        $response = $this->postJson('/api/v1/cart/items', [
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 2,
+        ]);
+        $token = $response->getCookie('cart_token')->getValue();
+        User::factory()->create(['email' => 'umair@example.com', 'password' => 'password']);
+
+        $this->withCookie('cart_token', $token)->postJson('/api/v1/auth/login', [
+            'email' => 'umair@example.com',
+            'password' => 'password',
+        ])->assertOk();
+
+        $this->getJson('/api/v1/cart')
+            ->assertOk()
+            ->assertJsonPath('data.totals.item_count', 2);
+        $this->assertSame(1, Cart::query()->whereNotNull('user_id')->count());
+        $this->assertSame(0, Cart::query()->whereNotNull('guest_token')->count());
+    }
+
+    public function test_merge_combines_quantities_for_the_same_variant(): void
+    {
+        $user = User::factory()->create(['email' => 'umair@example.com', 'password' => 'password']);
+        $userCart = Cart::factory()->for($user)->create();
+        CartItem::factory()->for($userCart)->for($this->variant, 'variant')->create(['quantity' => 1]);
+
+        $response = $this->postJson('/api/v1/cart/items', [
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 2,
+        ]);
+        $token = $response->getCookie('cart_token')->getValue();
+
+        $this->withCookie('cart_token', $token)->postJson('/api/v1/auth/login', [
+            'email' => 'umair@example.com',
+            'password' => 'password',
+        ])->assertOk();
+
+        $this->getJson('/api/v1/cart')
+            ->assertOk()
+            ->assertJsonPath('data.totals.item_count', 3);
+        $this->assertSame(1, $userCart->fresh()->items()->count());
+    }
+
+    public function test_merge_clamps_combined_quantity_to_available_stock(): void
+    {
+        $user = User::factory()->create(['email' => 'umair@example.com', 'password' => 'password']);
+        $userCart = Cart::factory()->for($user)->create();
+        CartItem::factory()->for($userCart)->for($this->variant, 'variant')->create(['quantity' => 4]);
+
+        $response = $this->postJson('/api/v1/cart/items', [
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 4,
+        ]);
+        $token = $response->getCookie('cart_token')->getValue();
+
+        $this->withCookie('cart_token', $token)->postJson('/api/v1/auth/login', [
+            'email' => 'umair@example.com',
+            'password' => 'password',
+        ])->assertOk();
+
+        // on_hand = 5, so merged 4+4 clamps to 5
+        $this->assertSame(5, $userCart->fresh()->items()->sole()->quantity);
+    }
+
+    public function test_guest_cart_merges_on_registration(): void
+    {
+        $response = $this->postJson('/api/v1/cart/items', [
+            'product_variant_id' => $this->variant->id,
+            'quantity' => 1,
+        ]);
+        $token = $response->getCookie('cart_token')->getValue();
+
+        $this->withCookie('cart_token', $token)->postJson('/api/v1/auth/register', [
+            'name' => 'Umair Ali',
+            'email' => 'new@example.com',
+            'password' => 'AVery-Secure-Password-1',
+            'password_confirmation' => 'AVery-Secure-Password-1',
+        ])->assertCreated();
+
+        $this->getJson('/api/v1/cart')
+            ->assertOk()
+            ->assertJsonPath('data.totals.item_count', 1);
+    }
 }

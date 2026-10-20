@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Carts\MergeGuestCart;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Resources\Api\V1\UserResource;
@@ -12,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class SessionController extends Controller
 {
-    public function store(LoginRequest $request): UserResource
+    public function store(LoginRequest $request, MergeGuestCart $mergeGuestCart): UserResource
     {
         if (! Auth::guard('web')->attempt($request->validated())) {
             throw ValidationException::withMessages([
@@ -21,6 +22,7 @@ class SessionController extends Controller
         }
 
         $request->session()->regenerate();
+        $mergeGuestCart->handle($request->cookie('cart_token'), $request->user());
 
         return new UserResource($request->user());
     }

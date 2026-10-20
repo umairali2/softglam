@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Actions\Carts\MergeGuestCart;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class RegistrationController extends Controller
 {
-    public function store(RegisterRequest $request): JsonResponse
+    public function store(RegisterRequest $request, MergeGuestCart $mergeGuestCart): JsonResponse
     {
         $user = User::query()->create($request->validated());
 
@@ -20,6 +21,7 @@ class RegistrationController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        $mergeGuestCart->handle($request->cookie('cart_token'), $user);
 
         return (new UserResource($user))->response()->setStatusCode(201);
     }
