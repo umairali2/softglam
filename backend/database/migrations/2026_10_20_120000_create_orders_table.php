@@ -37,7 +37,7 @@ return new class extends Migration
             $table->foreignUuid('product_variant_id')->constrained()->restrictOnDelete();
             $table->string('sku');
             $table->string('product_title');
-            $table->string('variant_title');
+            $table->string('variant_title')->nullable();
             $table->string('product_slug');
             $table->unsignedInteger('quantity');
             $table->unsignedBigInteger('unit_price_amount');

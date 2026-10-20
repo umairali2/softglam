@@ -301,7 +301,7 @@ Use this checklist in the implementing issue or pull request for every feature:
 - [ ] `ORD-001` Customer-safe order number and order state machine — **In progress: number + initial states done; transition enforcement pending**
 - [ ] `ORD-002` Immutable product, variant, price, adjustment, and address snapshots — **In progress: item/price/address snapshots done**
 - [ ] `ORD-003` Order timeline and audit events — **Not started**
-- [ ] `ORD-004` Customer order history and order detail — **Not started**
+- [ ] `ORD-004` Customer order history and order detail — **In progress: backend list/detail + guest lookup done; frontend pending**
 - [ ] `ORD-005` Secure guest confirmation and order access — **Not started**
 - [ ] `ORD-006` Customer/admin cancellation eligibility and atomic inventory release — **Not started**
 

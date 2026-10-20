@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CustomerAddressController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Middleware\ResolveCart;
 use Illuminate\Support\Facades\Route;
@@ -42,11 +43,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::match(['put', 'patch'], 'cart/items/{item}', [CartItemController::class, 'update'])->name('cart.items.update');
         Route::delete('cart/items/{item}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
         Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+        Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::apiResource('me/addresses', CustomerAddressController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->names('me.addresses');
+        Route::get('me/orders', [OrderController::class, 'index'])->name('me.orders.index');
     });
 });
