@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderVerificationController as AdminOrderVerificationController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
@@ -60,6 +61,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('orders/{order}/decline', [AdminOrderVerificationController::class, 'decline'])->name('orders.decline');
             Route::post('orders/{order}/fulfill', [AdminOrderVerificationController::class, 'fulfill'])->name('orders.fulfill');
             Route::post('orders/{order}/cancel', [AdminOrderVerificationController::class, 'cancel'])->name('orders.cancel');
+            Route::get('inventory/low-stock', [AdminInventoryController::class, 'lowStock'])->name('inventory.low-stock');
         });
     });
 });
