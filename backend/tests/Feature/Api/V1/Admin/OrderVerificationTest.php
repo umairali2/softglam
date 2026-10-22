@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\V1\Admin;
 
+use App\Mail\OrderFulfilledMail;
 use App\Models\InventoryItem;
 use App\Models\Location;
 use App\Models\Order;
@@ -10,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use App\OrderStatus;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class OrderVerificationTest extends TestCase
@@ -166,6 +168,8 @@ class OrderVerificationTest extends TestCase
             'reference_id' => $order->id,
         ]);
         $this->assertNotNull($order->fresh()->fulfilled_at);
+        Mail::fake();
+        $this->postJson("/api/v1/admin/orders/{$order->id}/fulfill")->assertUnprocessable();
     }
 
     public function test_pending_orders_cannot_be_fulfilled(): void
@@ -200,6 +204,21 @@ class OrderVerificationTest extends TestCase
             'reason_code' => 'order_cancelled',
             'reference_id' => $order->id,
         ]);
+    }
+
+    public function test_fulfilling_queues_a_dispatch_email_once(): void
+    {
+        Mail::fake();
+        $order = $this->placeOrder(1);
+        $this->login($this->staff);
+        $this->postJson("/api/v1/admin/orders/{$order->id}/confirm")->assertOk();
+
+        $this->postJson("/api/v1/admin/orders/{$order->id}/fulfill", [
+            'tracking_number' => 'ABC123',
+        ])->assertOk();
+
+        Mail::assertQueued(OrderFulfilledMail::class, 1);
+        Mail::assertQueued(OrderFulfilledMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
     public function test_fulfilled_orders_cannot_be_cancelled(): void

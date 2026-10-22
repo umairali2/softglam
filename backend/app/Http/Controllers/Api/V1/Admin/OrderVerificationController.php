@@ -6,11 +6,13 @@ use App\Actions\Orders\FulfillOrder;
 use App\Actions\Orders\ReleaseOrderReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Mail\OrderFulfilledMail;
 use App\Models\Order;
 use App\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class OrderVerificationController extends Controller
@@ -88,6 +90,7 @@ class OrderVerificationController extends Controller
                 'fulfilled_at' => now(),
             ]);
             $order->recordEvent('fulfilled', $request->user(), $validated['tracking_number'] ?? null);
+            Mail::to($order->contact_email)->queue(new OrderFulfilledMail($order));
         }, 3);
 
         return new OrderResource($order->fresh()->load(['items', 'events']));
