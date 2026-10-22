@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\Orders\ReleaseOrderReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Mail\OrderCancelledMail;
 use App\Models\Order;
 use App\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
@@ -66,6 +68,7 @@ class OrderController extends Controller
                 'cancelled_at' => now(),
             ]);
             $order->recordEvent('cancelled', $user, 'cancelled_by_customer');
+            Mail::to($order->contact_email)->queue(new OrderCancelledMail($order));
         }, 3);
 
         return new OrderResource($order->fresh()->load(['items', 'events']));

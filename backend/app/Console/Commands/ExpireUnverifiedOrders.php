@@ -3,10 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Actions\Orders\ReleaseOrderReservation;
+use App\Mail\OrderCancelledMail;
 use App\Models\Order;
 use App\OrderStatus;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ExpireUnverifiedOrders extends Command
 {
@@ -47,6 +49,7 @@ class ExpireUnverifiedOrders extends Command
                     'status_reason' => 'verification_expired',
                 ]);
                 $order->recordEvent('expired', null, 'verification_expired');
+                Mail::to($order->contact_email)->queue(new OrderCancelledMail($order));
             }, 3);
         }
 

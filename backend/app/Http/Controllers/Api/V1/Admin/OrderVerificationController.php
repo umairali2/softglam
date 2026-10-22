@@ -6,6 +6,7 @@ use App\Actions\Orders\FulfillOrder;
 use App\Actions\Orders\ReleaseOrderReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Mail\OrderCancelledMail;
 use App\Mail\OrderFulfilledMail;
 use App\Models\Order;
 use App\OrderStatus;
@@ -62,6 +63,7 @@ class OrderVerificationController extends Controller
                 'status_reason' => $validated['reason'],
             ]);
             $order->recordEvent('declined', $request->user(), $validated['reason']);
+            Mail::to($order->contact_email)->queue(new OrderCancelledMail($order));
         }, 3);
 
         return new OrderResource($order->fresh()->load(['items', 'events']));
@@ -117,6 +119,7 @@ class OrderVerificationController extends Controller
                 'cancelled_at' => now(),
             ]);
             $order->recordEvent('cancelled', $request->user(), $validated['reason']);
+            Mail::to($order->contact_email)->queue(new OrderCancelledMail($order));
         }, 3);
 
         return new OrderResource($order->fresh()->load(['items', 'events']));
