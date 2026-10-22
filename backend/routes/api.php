@@ -62,6 +62,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('orders/{order}/fulfill', [AdminOrderVerificationController::class, 'fulfill'])->name('orders.fulfill');
             Route::post('orders/{order}/cancel', [AdminOrderVerificationController::class, 'cancel'])->name('orders.cancel');
             Route::get('inventory/low-stock', [AdminInventoryController::class, 'lowStock'])->name('inventory.low-stock');
+            Route::post('inventory/{inventoryItem}/adjust', [AdminInventoryController::class, 'adjust'])->name('inventory.adjust');
         });
     });
 });

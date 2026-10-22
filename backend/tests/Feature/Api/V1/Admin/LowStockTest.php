@@ -69,4 +69,38 @@ class LowStockTest extends TestCase
 
         $this->getJson('/api/v1/admin/inventory/low-stock')->assertForbidden();
     }
+
+    public function test_staff_can_adjust_stock_with_a_reason(): void
+    {
+        $item = InventoryItem::query()->whereHas('productVariant', fn ($q) => $q->where('sku', 'SG-DAILY-02'))->sole();
+        $this->login($this->staff);
+
+        $this->postJson("/api/v1/admin/inventory/{$item->id}/adjust", [
+            'delta' => -2,
+            'reason' => 'damaged',
+            'note' => 'Two units water-damaged in storage',
+        ])->assertCreated()
+            ->assertJsonPath('data.on_hand_after', 18)
+            ->assertJsonPath('data.reserved_after', 0);
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'inventory_item_id' => $item->id,
+            'type' => 'manual_adjustment',
+            'reason_code' => 'damaged',
+            'actor_id' => $this->staff->id,
+        ]);
+    }
+
+    public function test_adjustment_below_reserved_is_rejected(): void
+    {
+        $item = InventoryItem::query()->whereHas('productVariant', fn ($q) => $q->where('sku', 'SG-DAILY-01'))->sole();
+        $item->update(['reserved' => 3]);
+        $this->login($this->staff);
+
+        $this->postJson("/api/v1/admin/inventory/{$item->id}/adjust", [
+            'delta' => -10,
+            'reason' => 'count_fix',
+        ])->assertUnprocessable();
+        $this->assertSame(3, $item->fresh()->on_hand);
+    }
 }
