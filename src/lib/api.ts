@@ -126,7 +126,8 @@ export async function apiSend<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", pa
 }
 
 // Catalog
-export const listProducts = () => apiGet<{ data: ApiProduct[] }>("/products");
+export const listProducts = (category?: string) =>
+  apiGet<{ data: ApiProduct[] }>(`/products${category ? `?category=${encodeURIComponent(category)}` : ""}`);
 export const getProduct = (slug: string) => apiGet<{ data: ApiProduct }>(`/products/${slug}`);
 
 // Cart (cookie-session based)

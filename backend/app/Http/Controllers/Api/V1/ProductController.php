@@ -7,13 +7,21 @@ use App\Http\Resources\Api\V1\ProductResource;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
         $products = $this->publicQuery()
+            ->when(
+                $request->query('category'),
+                fn (Builder $query, string $slug) => $query->whereHas(
+                    'categories',
+                    fn (Builder $q) => $q->where('slug', $slug),
+                ),
+            )
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->cursorPaginate(20);

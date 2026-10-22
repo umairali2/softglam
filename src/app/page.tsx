@@ -66,7 +66,7 @@ export default async function Home() {
           </div>
           <h3>{collection.name}</h3>
           <p>{collection.description}</p>
-          <Link href="#new" aria-label={`Shop ${collection.name}`}>Discover <ArrowIcon /></Link>
+          <Link href={`/categories/${collection.id}`} aria-label={`Shop ${collection.name}`}>Discover <ArrowIcon /></Link>
         </article>)}
       </div>
     </section>

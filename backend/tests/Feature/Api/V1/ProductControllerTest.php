@@ -18,6 +18,21 @@ class ProductControllerTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_index_filters_by_category_slug(): void
+    {
+        $earrings = Category::factory()->create(['slug' => 'earrings']);
+        $rings = Category::factory()->create(['slug' => 'rings']);
+
+        $hoops = Product::factory()->published()->create(['slug' => 'gold-hoops']);
+        $hoops->categories()->attach($earrings->id);
+        Product::factory()->published()->create(['slug' => 'signet-ring'])->categories()->attach($rings->id);
+
+        $this->getJson('/api/v1/products?category=earrings')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'gold-hoops');
+    }
+
     public function test_index_returns_only_published_products_with_sellable_variants(): void
     {
         $published = Product::factory()->published()->create(['slug' => 'daily-glow']);
