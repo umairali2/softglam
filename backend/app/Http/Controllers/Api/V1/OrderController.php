@@ -65,6 +65,8 @@ class OrderController extends Controller
             ]);
         }
 
+        $user = $request->user('sanctum');
+
         DB::transaction(function () use ($order, $release, $user): void {
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
             $release->handle($order, 'customer_cancelled');
