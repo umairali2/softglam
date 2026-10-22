@@ -175,3 +175,15 @@ export const forgotPassword = (email: string) =>
   apiSend<{ data: { message: string } }>("POST", "/auth/forgot-password", { email });
 export const resetPassword = (payload: { token: string; email: string; password: string; password_confirmation: string }) =>
   apiSend<{ data: { status: string } }>("POST", "/auth/reset-password", payload);
+
+// Admin
+export const listAdminOrders = (status?: string) =>
+  apiGet<{ data: Order[] }>(`/admin/orders${status ? `?status=${status}` : ""}`);
+export const confirmOrder = (orderId: string) =>
+  apiSend<{ data: Order }>("POST", `/admin/orders/${orderId}/confirm`);
+export const declineOrder = (orderId: string, reason: string) =>
+  apiSend<{ data: Order }>("POST", `/admin/orders/${orderId}/decline`, { reason });
+export const fulfillOrder = (orderId: string, payload: { courier_name?: string; tracking_number?: string }) =>
+  apiSend<{ data: Order }>("POST", `/admin/orders/${orderId}/fulfill`, payload);
+export const cancelOrder = (orderId: string, reason: string) =>
+  apiSend<{ data: Order }>("POST", `/admin/orders/${orderId}/cancel`, { reason });
