@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\V1\Admin;
 
+use App\Mail\OrderConfirmedMail;
 use App\Mail\OrderFulfilledMail;
 use App\Models\InventoryItem;
 use App\Models\Location;
@@ -89,6 +90,7 @@ class OrderVerificationTest extends TestCase
 
     public function test_staff_can_confirm_an_order_and_stock_stays_reserved(): void
     {
+        Mail::fake();
         $order = $this->placeOrder(3);
         $this->login($this->staff);
 
@@ -100,6 +102,7 @@ class OrderVerificationTest extends TestCase
         $this->assertSame(3, $this->inventoryItem->fresh()->reserved);
         $confirmEvent = $order->events()->where('type', 'confirmed')->sole();
         $this->assertSame($this->staff->id, $confirmEvent->actor_id);
+        Mail::assertQueued(OrderConfirmedMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
     public function test_staff_can_decline_an_order_and_stock_is_released(): void

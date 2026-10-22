@@ -7,6 +7,7 @@ use App\Actions\Orders\ReleaseOrderReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Mail\OrderCancelledMail;
+use App\Mail\OrderConfirmedMail;
 use App\Mail\OrderFulfilledMail;
 use App\Models\Order;
 use App\OrderStatus;
@@ -39,6 +40,7 @@ class OrderVerificationController extends Controller
 
         $order->update(['status' => OrderStatus::Confirmed]);
         $order->recordEvent('confirmed', $request->user());
+        Mail::to($order->contact_email)->queue(new OrderConfirmedMail($order));
 
         return new OrderResource($order->fresh()->load(['items', 'events']));
     }
