@@ -173,6 +173,8 @@ export const checkoutCod = (payload: {
 
 // Orders
 export const getOrder = (orderNumber: string) => apiGet<{ data: Order }>(`/orders/${orderNumber}`);
+export const cancelMyOrder = (orderNumber: string) =>
+  apiSend<{ data: Order }>("POST", `/orders/${orderNumber}/cancel`);
 export const listMyOrders = () => apiGet<{ data: Order[] }>("/me/orders");
 
 // Auth

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ApiError, getOrder, type Order } from "@/lib/api";
+import { ApiError, cancelMyOrder, getOrder, type Order } from "@/lib/api";
 import { formatPkr } from "@/lib/money";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -17,6 +17,8 @@ export default function OrderPage() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     getOrder(orderNumber)
@@ -39,6 +41,27 @@ export default function OrderPage() {
       </p>
       {order.payment_method === "cod" && order.status === "pending_verification" && (
         <p>We&apos;ll call {order.contact_phone} within 24 hours to confirm your order.</p>
+      )}
+      {order.status === "pending_verification" && (
+        <p>
+          <button
+            onClick={async () => {
+              setCancelling(true);
+              setCancelError(null);
+              try {
+                const r = await cancelMyOrder(order.order_number);
+                setOrder(r.data);
+              } catch {
+                setCancelError("This order can no longer be cancelled. Please contact support.");
+              }
+              setCancelling(false);
+            }}
+            disabled={cancelling}
+          >
+            {cancelling ? "Cancelling…" : "Cancel this order"}
+          </button>
+          {cancelError && <span role="alert"> {cancelError}</span>}
+        </p>
       )}
       <h2>Items</h2>
       <ul>

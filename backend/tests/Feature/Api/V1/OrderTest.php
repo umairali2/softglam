@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Models\InventoryItem;
+use App\Models\InventoryMovement;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\Product;
@@ -117,5 +118,37 @@ class OrderTest extends TestCase
     public function test_order_history_requires_authentication(): void
     {
         $this->getJson('/api/v1/me/orders')->assertUnauthorized();
+    }
+
+    public function test_guest_can_cancel_their_own_pending_order(): void
+    {
+        $order = $this->placeOrder();
+
+        $this->postJson("/api/v1/orders/{$order->order_number}/cancel")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled');
+
+        $order->refresh();
+        $this->assertSame('cancelled_by_customer', $order->status_reason);
+        $this->assertNotNull($order->cancelled_at);
+        $this->assertSame('customer_cancelled', InventoryMovement::query()->where('type', 'release')->sole()->reason_code);
+    }
+
+    public function test_a_different_guest_cannot_cancel_an_order(): void
+    {
+        $order = $this->placeOrder();
+        $this->withCookie('cart_token', Str::uuid()->toString());
+
+        $this->postJson("/api/v1/orders/{$order->order_number}/cancel")->assertNotFound();
+        $this->assertSame('pending_verification', $order->fresh()->status->value);
+    }
+
+    public function test_confirmed_orders_cannot_be_self_cancelled(): void
+    {
+        $order = $this->placeOrder();
+        $order->update(['status' => 'confirmed']);
+
+        $this->postJson("/api/v1/orders/{$order->order_number}/cancel")
+            ->assertUnprocessable();
     }
 }

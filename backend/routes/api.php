@@ -45,6 +45,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('cart/items/{item}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
         Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
         Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
+        Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {
