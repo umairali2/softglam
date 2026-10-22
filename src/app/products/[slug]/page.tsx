@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getProduct } from "@/lib/api";
 import { formatPkr } from "@/lib/money";
 import { AddToCartButton } from "@/components/add-to-cart-button";
+import { WishlistButton } from "@/components/wishlist-button";
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -42,7 +43,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <> <s>{formatPkr(variant.price.compare_at_amount)}</s></>
               )}
             </p>
-            <AddToCartButton variantId={variant.id} disabled={outOfStock} />
+            <AddToCartButton variantId={variant.id} disabled={outOfStock} /> <WishlistButton productId={product.id} />
           </div>
         )}
         {product.short_description && <p>{product.short_description}</p>}

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerAddressController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\WishlistController;
 use App\Http\Middleware\ResolveCart;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->only(['index', 'store', 'update', 'destroy'])
             ->names('me.addresses');
         Route::get('me/orders', [OrderController::class, 'index'])->name('me.orders.index');
+        Route::get('me/wishlist', [WishlistController::class, 'index'])->name('me.wishlist.index');
+        Route::post('me/wishlist', [WishlistController::class, 'store'])->name('me.wishlist.store');
+        Route::delete('me/wishlist/{productId}', [WishlistController::class, 'destroy'])->name('me.wishlist.destroy');
 
         Route::prefix('admin')->name('admin.')->middleware('staff')->group(function (): void {
             Route::get('orders', [AdminOrderVerificationController::class, 'index'])->name('orders.index');

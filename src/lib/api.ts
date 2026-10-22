@@ -161,6 +161,13 @@ export const createAddress = (payload: Omit<CustomerAddress, "id">) =>
   apiSend<{ data: CustomerAddress }>("POST", "/me/addresses", payload);
 export const deleteAddress = (id: string) => apiSend<void>("DELETE", `/me/addresses/${id}`);
 
+// Wishlist
+export const listWishlist = () => apiGet<{ data: ApiProduct[] }>("/me/wishlist");
+export const addToWishlist = (productId: string) =>
+  apiSend<void>("POST", "/me/wishlist", { product_id: productId });
+export const removeFromWishlist = (productId: string) =>
+  apiSend<void>("DELETE", `/me/wishlist/${productId}`);
+
 // Checkout
 export const checkoutCod = (payload: {
   contact_email: string;
