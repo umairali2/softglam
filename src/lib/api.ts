@@ -137,11 +137,30 @@ export const updateCartItem = (itemId: string, quantity: number) =>
   apiSend<{ data: Cart }>("PATCH", `/cart/items/${itemId}`, { quantity });
 export const removeCartItem = (itemId: string) => apiSend<void>("DELETE", `/cart/items/${itemId}`);
 
+// Saved addresses
+export type CustomerAddress = {
+  id: string;
+  recipient_name: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  area: string | null;
+  city: string;
+  postal_code: string | null;
+  is_default: boolean;
+};
+
+export const listAddresses = () => apiGet<{ data: CustomerAddress[] }>("/me/addresses");
+export const createAddress = (payload: Omit<CustomerAddress, "id">) =>
+  apiSend<{ data: CustomerAddress }>("POST", "/me/addresses", payload);
+export const deleteAddress = (id: string) => apiSend<void>("DELETE", `/me/addresses/${id}`);
+
 // Checkout
 export const checkoutCod = (payload: {
   contact_email: string;
   contact_phone: string;
-  address: {
+  address_id?: string;
+  address?: {
     recipient_name: string;
     phone: string;
     line1: string;
@@ -149,7 +168,7 @@ export const checkoutCod = (payload: {
     area?: string;
     city: string;
     postal_code?: string;
-  };
+  } | undefined;
 }) => apiSend<{ data: Order }>("POST", "/checkout", payload);
 
 // Orders

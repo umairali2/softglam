@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError, checkoutCod, getCart, type Cart } from "@/lib/api";
+import { ApiError, checkoutCod, getCart, getUser, listAddresses, type Cart, type CustomerAddress } from "@/lib/api";
 import { formatPkr } from "@/lib/money";
 
 const input = { width: "100%", marginBottom: "0.75rem", padding: "0.5rem" } as const;
@@ -14,6 +14,8 @@ export default function CheckoutPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [addressId, setAddressId] = useState<string | null>(null);
   const [form, setForm] = useState({
     contact_email: "",
     contact_phone: "",
@@ -28,6 +30,17 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     getCart().then((r) => setCart(r.data)).catch(() => setError("Your cart could not be loaded."));
+    getUser()
+      .then(async (r) => {
+        setForm((f) => ({ ...f, contact_email: f.contact_email || r.data.email }));
+        const list = await listAddresses().catch(() => null);
+        if (list?.data.length) {
+          setAddresses(list.data);
+          const def = list.data.find((a) => a.is_default) ?? list.data[0];
+          setAddressId(def.id);
+        }
+      })
+      .catch(() => undefined); // guest checkout
   }, []);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -44,7 +57,8 @@ export default function CheckoutPage() {
       const r = await checkoutCod({
         contact_email: form.contact_email,
         contact_phone: form.contact_phone,
-        address: {
+        address_id: addressId ?? undefined,
+        address: addressId ? undefined : {
           recipient_name: form.recipient_name,
           phone: form.phone,
           line1: form.line1,
@@ -86,16 +100,44 @@ export default function CheckoutPage() {
         </fieldset>
         <fieldset>
           <legend>Delivery address</legend>
-          <input style={input} required placeholder="Recipient name" value={form.recipient_name} onChange={set("recipient_name")} />
-          {fieldError("address.recipient_name") && <p role="alert">{fieldError("address.recipient_name")}</p>}
-          <input style={input} required placeholder="Recipient phone" value={form.phone} onChange={set("phone")} />
-          <input style={input} required placeholder="Address line 1" value={form.line1} onChange={set("line1")} />
-          {fieldError("address.line1") && <p role="alert">{fieldError("address.line1")}</p>}
-          <input style={input} placeholder="Address line 2 (optional)" value={form.line2} onChange={set("line2")} />
-          <input style={input} placeholder="Area / neighbourhood (optional)" value={form.area} onChange={set("area")} />
-          <input style={input} required placeholder="City" value={form.city} onChange={set("city")} />
-          {fieldError("address.city") && <p role="alert">{fieldError("address.city")}</p>}
-          <input style={input} placeholder="Postal code (optional)" value={form.postal_code} onChange={set("postal_code")} />
+          {addresses.length > 0 && (
+            <>
+              {addresses.map((a) => (
+                <label key={a.id} style={{ display: "block", marginBottom: "0.5rem" }}>
+                  <input
+                    type="radio"
+                    name="saved_address"
+                    checked={addressId === a.id}
+                    onChange={() => setAddressId(a.id)}
+                  />{" "}
+                  {a.recipient_name} — {a.line1}, {a.city} {a.is_default ? "(default)" : ""}
+                </label>
+              ))}
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                <input
+                  type="radio"
+                  name="saved_address"
+                  checked={addressId === null}
+                  onChange={() => setAddressId(null)}
+                />{" "}
+                Use a different address
+              </label>
+            </>
+          )}
+          {addressId === null && (
+            <>
+              <input style={input} required placeholder="Recipient name" value={form.recipient_name} onChange={set("recipient_name")} />
+              {fieldError("address.recipient_name") && <p role="alert">{fieldError("address.recipient_name")}</p>}
+              <input style={input} required placeholder="Recipient phone" value={form.phone} onChange={set("phone")} />
+              <input style={input} required placeholder="Address line 1" value={form.line1} onChange={set("line1")} />
+              {fieldError("address.line1") && <p role="alert">{fieldError("address.line1")}</p>}
+              <input style={input} placeholder="Address line 2 (optional)" value={form.line2} onChange={set("line2")} />
+              <input style={input} placeholder="Area / neighbourhood (optional)" value={form.area} onChange={set("area")} />
+              <input style={input} required placeholder="City" value={form.city} onChange={set("city")} />
+              {fieldError("address.city") && <p role="alert">{fieldError("address.city")}</p>}
+              <input style={input} placeholder="Postal code (optional)" value={form.postal_code} onChange={set("postal_code")} />
+            </>
+          )}
         </fieldset>
         <fieldset>
           <legend>Payment</legend>
