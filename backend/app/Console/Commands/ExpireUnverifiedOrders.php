@@ -46,6 +46,7 @@ class ExpireUnverifiedOrders extends Command
                     'status' => OrderStatus::Cancelled,
                     'status_reason' => 'verification_expired',
                 ]);
+                $order->recordEvent('expired', null, 'verification_expired');
             }, 3);
         }
 

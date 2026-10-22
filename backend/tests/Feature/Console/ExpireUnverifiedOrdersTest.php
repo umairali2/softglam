@@ -73,6 +73,7 @@ class ExpireUnverifiedOrdersTest extends TestCase
         $release = InventoryMovement::query()->where('type', InventoryMovementType::Release)->sole();
         $this->assertSame('verification_expired', $release->reason_code);
         $this->assertSame($order->id, $release->reference_id);
+        $this->assertSame('expired', $order->events()->where('type', 'expired')->sole()->type);
     }
 
     public function test_fresh_pending_orders_are_not_touched(): void

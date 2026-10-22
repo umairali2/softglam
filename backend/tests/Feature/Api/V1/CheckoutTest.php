@@ -98,6 +98,7 @@ class CheckoutTest extends TestCase
             ->assertJsonPath('data.items.0.unit_price.amount', 250000);
 
         $order = Order::query()->sole();
+        $this->assertSame('placed', $order->events()->sole()->type);
         $this->assertSame(OrderStatus::PendingVerification, $order->status);
         $this->assertNotNull($order->verification_deadline_at);
         $this->assertSame(2, $this->inventoryItem->fresh()->reserved);

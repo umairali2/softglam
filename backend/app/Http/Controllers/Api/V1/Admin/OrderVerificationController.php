@@ -35,8 +35,9 @@ class OrderVerificationController extends Controller
         }
 
         $order->update(['status' => OrderStatus::Confirmed]);
+        $order->recordEvent('confirmed', $request->user());
 
-        return new OrderResource($order->fresh()->load('items'));
+        return new OrderResource($order->fresh()->load(['items', 'events']));
     }
 
     public function decline(Request $request, Order $order, ReleaseOrderReservation $release): OrderResource
@@ -51,16 +52,17 @@ class OrderVerificationController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($order, $release, $validated): void {
+        DB::transaction(function () use ($order, $release, $validated, $request): void {
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
             $release->handle($order, 'verification_declined');
             $order->update([
                 'status' => OrderStatus::Cancelled,
                 'status_reason' => $validated['reason'],
             ]);
+            $order->recordEvent('declined', $request->user(), $validated['reason']);
         }, 3);
 
-        return new OrderResource($order->fresh()->load('items'));
+        return new OrderResource($order->fresh()->load(['items', 'events']));
     }
 
     public function fulfill(Request $request, Order $order, FulfillOrder $fulfill): OrderResource
@@ -76,7 +78,7 @@ class OrderVerificationController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($order, $fulfill, $validated): void {
+        DB::transaction(function () use ($order, $fulfill, $validated, $request): void {
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
             $fulfill->handle($order);
             $order->update([
@@ -85,9 +87,10 @@ class OrderVerificationController extends Controller
                 'tracking_number' => $validated['tracking_number'] ?? null,
                 'fulfilled_at' => now(),
             ]);
+            $order->recordEvent('fulfilled', $request->user(), $validated['tracking_number'] ?? null);
         }, 3);
 
-        return new OrderResource($order->fresh()->load('items'));
+        return new OrderResource($order->fresh()->load(['items', 'events']));
     }
 
     public function cancel(Request $request, Order $order, ReleaseOrderReservation $release): OrderResource
@@ -102,7 +105,7 @@ class OrderVerificationController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($order, $release, $validated): void {
+        DB::transaction(function () use ($order, $release, $validated, $request): void {
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
             $release->handle($order, 'order_cancelled');
             $order->update([
@@ -110,8 +113,9 @@ class OrderVerificationController extends Controller
                 'status_reason' => $validated['reason'],
                 'cancelled_at' => now(),
             ]);
+            $order->recordEvent('cancelled', $request->user(), $validated['reason']);
         }, 3);
 
-        return new OrderResource($order->fresh()->load('items'));
+        return new OrderResource($order->fresh()->load(['items', 'events']));
     }
 }

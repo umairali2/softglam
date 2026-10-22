@@ -33,6 +33,11 @@ class OrderResource extends JsonResource
             'courier_name' => $this->courier_name,
             'tracking_number' => $this->tracking_number,
             'fulfilled_at' => $this->fulfilled_at?->toISOString(),
+            'timeline' => $this->whenLoaded('events', fn () => $this->events->map(fn ($event) => [
+                'type' => $event->type,
+                'note' => $event->note,
+                'created_at' => $event->created_at?->toISOString(),
+            ])),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

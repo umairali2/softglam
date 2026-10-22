@@ -96,6 +96,8 @@ class OrderVerificationTest extends TestCase
 
         $this->assertSame(OrderStatus::Confirmed, $order->fresh()->status);
         $this->assertSame(3, $this->inventoryItem->fresh()->reserved);
+        $confirmEvent = $order->events()->where('type', 'confirmed')->sole();
+        $this->assertSame($this->staff->id, $confirmEvent->actor_id);
     }
 
     public function test_staff_can_decline_an_order_and_stock_is_released(): void
@@ -190,6 +192,7 @@ class OrderVerificationTest extends TestCase
         $order->refresh();
         $this->assertSame('Customer requested cancellation', $order->status_reason);
         $this->assertNotNull($order->cancelled_at);
+        $this->assertSame('cancelled', $order->events()->where('type', 'cancelled')->sole()->type);
         $this->assertSame(10, $this->inventoryItem->fresh()->on_hand);
         $this->assertSame(0, $this->inventoryItem->fresh()->reserved);
         $this->assertDatabaseHas('inventory_movements', [

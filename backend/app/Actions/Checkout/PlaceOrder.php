@@ -41,7 +41,7 @@ class PlaceOrder
 
         $existing = Order::query()->where('cart_id', $cart->id)->first();
         if ($existing !== null) {
-            return $existing->load('items');
+            return $existing->load(['items', 'events']);
         }
 
         if ($cart->items->isEmpty()) {
@@ -133,12 +133,14 @@ class PlaceOrder
 
                 $cart->items()->delete();
 
-                return $order->load('items');
+                $order->recordEvent('placed', $user, 'cod_pending_verification');
+
+                return $order->load(['items', 'events']);
             }, 3);
         } catch (QueryException $exception) {
             $existing = Order::query()->where('cart_id', $cart->id)->first();
             if ($existing !== null) {
-                return $existing->load('items');
+                return $existing->load(['items', 'events']);
             }
 
             throw $exception;

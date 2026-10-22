@@ -21,7 +21,7 @@ class OrderController extends Controller
 
     public function show(Request $request, string $orderNumber): OrderResource
     {
-        $order = Order::query()->with('items')
+        $order = Order::query()->with(['items', 'events'])
             ->where('order_number', $orderNumber)
             ->firstOrFail();
 
