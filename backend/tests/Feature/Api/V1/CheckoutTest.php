@@ -173,6 +173,20 @@ class CheckoutTest extends TestCase
         Mail::assertQueued(OrderPlacedMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
+    public function test_cod_is_blocked_after_two_staff_declines(): void
+    {
+        foreach (range(1, 2) as $i) {
+            $order = Order::factory()->create(['contact_phone' => '03007654321']);
+            $order->recordEvent('declined', null, 'unreachable');
+        }
+
+        $this->addToCart(1);
+        $this->postJson('/api/v1/checkout', $this->checkoutPayload())
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('payment_method');
+        $this->assertSame(2, Order::query()->count());
+    }
+
     public function test_authenticated_customer_can_checkout_with_a_saved_address(): void
     {
         $user = User::factory()->create(['email' => 'umair@example.com', 'password' => 'password']);

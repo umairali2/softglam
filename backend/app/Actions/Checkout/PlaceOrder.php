@@ -26,6 +26,8 @@ class PlaceOrder
 
     public const VERIFICATION_HOURS = 24;
 
+    public const MAX_COD_DECLINES = 2;
+
     /**
      * @param  array{recipient_name: string, phone: string, line1: string, line2?: ?string, area?: ?string, city: string, postal_code?: ?string}  $address
      */
@@ -66,6 +68,16 @@ class PlaceOrder
         if ($total > self::COD_MAX_TOTAL) {
             throw ValidationException::withMessages([
                 'payment_method' => ['Cash on delivery is available for orders up to Rs 15,000.'],
+            ]);
+        }
+
+        $declines = Order::query()
+            ->where('contact_phone', $contactPhone)
+            ->whereHas('events', fn ($query) => $query->where('type', 'declined'))
+            ->count();
+        if ($declines >= self::MAX_COD_DECLINES) {
+            throw ValidationException::withMessages([
+                'payment_method' => ['Cash on delivery is not available for this phone number. Please pay online or contact support.'],
             ]);
         }
 
