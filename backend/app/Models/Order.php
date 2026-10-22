@@ -41,6 +41,14 @@ class Order extends Model
         return $this->hasMany(OrderEvent::class);
     }
 
+    /**
+     * @return HasMany<OrderReturn, $this>
+     */
+    public function returns(): HasMany
+    {
+        return $this->hasMany(OrderReturn::class);
+    }
+
     public function recordEvent(string $type, ?User $actor = null, ?string $note = null): OrderEvent
     {
         return $this->events()->create([

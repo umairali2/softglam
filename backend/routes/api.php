@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderVerificationController as AdminOrderVerificationController;
 use App\Http\Controllers\Api\V1\Admin\ProductImageController as AdminProductImageController;
+use App\Http\Controllers\Api\V1\Admin\ReturnController as AdminReturnController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
@@ -49,6 +50,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('checkout', [CheckoutController::class, 'store'])->middleware('throttle:6,1')->name('checkout.store');
         Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('orders/{orderNumber}/returns', [OrderController::class, 'requestReturn'])->name('orders.returns.store');
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {
@@ -68,6 +70,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('orders/{order}/cancel', [AdminOrderVerificationController::class, 'cancel'])->name('orders.cancel');
             Route::get('inventory/low-stock', [AdminInventoryController::class, 'lowStock'])->name('inventory.low-stock');
             Route::post('inventory/{inventoryItem}/adjust', [AdminInventoryController::class, 'adjust'])->name('inventory.adjust');
+            Route::get('returns', [AdminReturnController::class, 'index'])->name('returns.index');
+            Route::post('returns/{return}/resolve', [AdminReturnController::class, 'resolve'])->name('returns.resolve');
             Route::post('products/{product}/images', [AdminProductImageController::class, 'store'])->name('products.images.store');
             Route::delete('products/{product}/images/{image}', [AdminProductImageController::class, 'destroy'])->name('products.images.destroy');
         });
