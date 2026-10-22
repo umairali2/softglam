@@ -173,6 +173,14 @@ class CheckoutTest extends TestCase
         Mail::assertQueued(OrderPlacedMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
+    public function test_checkout_is_rate_limited(): void
+    {
+        for ($i = 0; $i < 7; $i++) {
+            $response = $this->postJson('/api/v1/checkout', []);
+        }
+        $response->assertTooManyRequests();
+    }
+
     public function test_checkout_requires_a_valid_pakistani_mobile(): void
     {
         $this->addToCart(1);

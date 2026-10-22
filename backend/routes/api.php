@@ -46,7 +46,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('cart/items', [CartItemController::class, 'store'])->name('cart.items.store');
         Route::match(['put', 'patch'], 'cart/items/{item}', [CartItemController::class, 'update'])->name('cart.items.update');
         Route::delete('cart/items/{item}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
-        Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+        Route::post('checkout', [CheckoutController::class, 'store'])->middleware('throttle:6,1')->name('checkout.store');
         Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
