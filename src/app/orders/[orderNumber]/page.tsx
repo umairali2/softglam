@@ -13,6 +13,15 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+const EVENT_LABELS: Record<string, string> = {
+  placed: "Order placed",
+  confirmed: "Confirmed by our team",
+  declined: "Declined",
+  fulfilled: "Dispatched to courier",
+  cancelled: "Cancelled",
+  expired: "Confirmation expired",
+};
+
 export default function OrderPage() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
   const [order, setOrder] = useState<Order | null>(null);
@@ -87,6 +96,23 @@ export default function OrderPage() {
         {order.shipping_address.postal_code ? ` ${order.shipping_address.postal_code}` : ""}<br />
         {order.shipping_address.phone}
       </p>
+      {order.tracking_number && (
+        <p>Tracking: {order.courier_name ? `${order.courier_name} — ` : ""}{order.tracking_number}</p>
+      )}
+      {order.timeline && order.timeline.length > 0 && (
+        <>
+          <h2>Order updates</h2>
+          <ul>
+            {order.timeline.map((event, i) => (
+              <li key={i}>
+                {EVENT_LABELS[event.type] ?? event.type}
+                {event.created_at ? ` — ${new Date(event.created_at).toLocaleString("en-PK")}` : ""}
+                {event.type === "declined" && event.note ? ` (${event.note})` : ""}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <Link className="text-link" href="/">Continue shopping</Link>
     </main>
   );

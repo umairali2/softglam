@@ -73,6 +73,9 @@ export type Order = {
   items: OrderItem[];
   totals: { subtotal_amount: number; shipping_amount: number; total_amount: number; currency: string };
   verification_deadline_at: string | null;
+  courier_name?: string | null;
+  tracking_number?: string | null;
+  timeline?: { type: string; note: string | null; created_at: string | null }[];
   created_at: string | null;
 };
 
