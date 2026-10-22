@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\InventoryMovementType;
+use App\Mail\OrderPlacedMail;
 use App\Models\CustomerAddress;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
@@ -13,6 +14,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use App\OrderStatus;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -158,6 +160,17 @@ class CheckoutTest extends TestCase
             ->assertJsonPath('data.order_number', Order::query()->sole()->order_number);
         $this->assertSame(1, Order::query()->count());
         $this->assertSame(1, $this->inventoryItem->fresh()->reserved);
+    }
+
+    public function test_placing_an_order_queues_the_confirmation_email_once(): void
+    {
+        Mail::fake();
+        $this->addToCart(1);
+        $this->postJson('/api/v1/checkout', $this->checkoutPayload())->assertCreated();
+        $this->postJson('/api/v1/checkout', $this->checkoutPayload())->assertOk();
+
+        Mail::assertQueued(OrderPlacedMail::class, 1);
+        Mail::assertQueued(OrderPlacedMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
     public function test_authenticated_customer_can_checkout_with_a_saved_address(): void

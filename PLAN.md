@@ -308,7 +308,7 @@ Use this checklist in the implementing issue or pull request for every feature:
 ### Notifications
 
 - [ ] `NOTIF-001` Transactional email provider and queue — **Not started**
-- [ ] `NOTIF-002` Order confirmation and cancellation templates — **Not started**
+- [ ] `NOTIF-002` Order confirmation and cancellation templates — **In progress: queued order-placed email done; other templates pending**
 - [ ] `NOTIF-003` Bounded retry, failure visibility, and notification history — **Not started**
 
 **Exit gate:** Duplicate submission cannot create duplicate orders or oversell stock; customers and staff see an accurate COD order state; confirmation notifications are recoverable.

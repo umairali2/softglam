@@ -3,6 +3,7 @@
 namespace App\Actions\Checkout;
 
 use App\InventoryMovementType;
+use App\Mail\OrderPlacedMail;
 use App\Models\Cart;
 use App\Models\InventoryItem;
 use App\Models\Location;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\OrderStatus;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -134,6 +136,8 @@ class PlaceOrder
                 $cart->items()->delete();
 
                 $order->recordEvent('placed', $user, 'cod_pending_verification');
+
+                Mail::to($contactEmail)->queue(new OrderPlacedMail($order));
 
                 return $order->load(['items', 'events']);
             }, 3);
