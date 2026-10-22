@@ -18,8 +18,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <main id="main" className="shell">
       <nav aria-label="Breadcrumb">
-        <Link href="/">Home</Link> / {product.categories[0]?.name ?? "Shop"}
+        <Link href="/">Home</Link> /{" "}
+        {product.categories[0] ? (
+          <Link href={`/categories/${product.categories[0].slug}`}>{product.categories[0].name}</Link>
+        ) : "Shop"}
       </nav>
+      {product.images?.[0] && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={product.images[0].url}
+          alt={product.images[0].alt ?? product.title}
+          style={{ maxWidth: "420px", borderRadius: "8px" }}
+        />
+      )}
       <section>
         <h1>{product.title}</h1>
         {product.subtitle && <p>{product.subtitle}</p>}

@@ -18,6 +18,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             const variant = product.variants.find((v) => v.is_default) ?? product.variants[0];
             return (
               <li key={product.id}>
+                {product.images?.[0] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={product.images[0].url} alt={product.images[0].alt ?? product.title} width={96} height={96} style={{ objectFit: "cover", borderRadius: "8px" }} />
+                )}
                 <Link href={`/products/${product.slug}`}>
                   {product.title} — {variant ? formatPkr(variant.price.amount) : ""}
                   {variant?.availability?.status === "out_of_stock" ? " (sold out)" : ""}

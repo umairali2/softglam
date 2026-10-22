@@ -39,6 +39,14 @@ class ProductResource extends JsonResource
                 'slug' => $category->slug,
             ])),
             'variants' => ProductVariantResource::collection($this->whenLoaded('variants')),
+            'images' => $this->whenLoaded('images', fn () => $this->images
+                ->sortBy('position')
+                ->map(fn ($image) => [
+                    'id' => $image->id,
+                    'url' => $image->url(),
+                    'alt' => $image->alt,
+                ])
+                ->values()),
         ];
     }
 }

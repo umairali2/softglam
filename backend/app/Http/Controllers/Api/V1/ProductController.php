@@ -44,6 +44,7 @@ class ProductController extends Controller
                 'brand:id,name,slug',
                 'productType:id,code,name',
                 'categories:id,name,slug',
+                'images:id,product_id,path,alt,position',
                 'variants' => fn (HasMany $query) => $query
                     ->sellable()
                     ->orderByDesc('is_default')

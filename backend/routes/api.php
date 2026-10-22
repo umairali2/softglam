@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Api\V1\Admin\OrderVerificationController as AdminOrderVerificationController;
+use App\Http\Controllers\Api\V1\Admin\ProductImageController as AdminProductImageController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
@@ -63,6 +64,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('orders/{order}/cancel', [AdminOrderVerificationController::class, 'cancel'])->name('orders.cancel');
             Route::get('inventory/low-stock', [AdminInventoryController::class, 'lowStock'])->name('inventory.low-stock');
             Route::post('inventory/{inventoryItem}/adjust', [AdminInventoryController::class, 'adjust'])->name('inventory.adjust');
+            Route::post('products/{product}/images', [AdminProductImageController::class, 'store'])->name('products.images.store');
+            Route::delete('products/{product}/images/{image}', [AdminProductImageController::class, 'destroy'])->name('products.images.destroy');
         });
     });
 });

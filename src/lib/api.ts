@@ -12,6 +12,7 @@ export type ApiProduct = {
   brand: { name: string; slug: string } | null;
   categories: { name: string; slug: string }[];
   variants: ApiVariant[];
+  images?: { id: string; url: string; alt: string | null }[];
 };
 
 export type ApiVariant = {
