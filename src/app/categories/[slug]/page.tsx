@@ -4,7 +4,7 @@ import { formatPkr } from "@/lib/money";
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const products = await listProducts(slug).then((r) => r.data).catch(() => []);
+  const products = await listProducts({ category: slug }).then((r) => r.data).catch(() => []);
   const title = products[0]?.categories.find((c) => c.slug === slug)?.name ?? slug;
 
   return (

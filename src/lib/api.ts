@@ -127,8 +127,12 @@ export async function apiSend<T>(method: "POST" | "PUT" | "PATCH" | "DELETE", pa
 }
 
 // Catalog
-export const listProducts = (category?: string) =>
-  apiGet<{ data: ApiProduct[] }>(`/products${category ? `?category=${encodeURIComponent(category)}` : ""}`);
+export const listProducts = (options: { category?: string; q?: string } = {}) =>
+  apiGet<{ data: ApiProduct[] }>(
+    `/products?${new URLSearchParams(
+      Object.entries(options).filter(([, v]) => v) as [string, string][],
+    ).toString()}`,
+  );
 export const getProduct = (slug: string) => apiGet<{ data: ApiProduct }>(`/products/${slug}`);
 
 // Cart (cookie-session based)

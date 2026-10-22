@@ -33,6 +33,22 @@ class ProductControllerTest extends TestCase
             ->assertJsonPath('data.0.slug', 'gold-hoops');
     }
 
+    public function test_index_searches_title_and_sku(): void
+    {
+        $match = Product::factory()->published()->create(['slug' => 'pearl-drop', 'title' => 'Pearl Drop Earrings']);
+        ProductVariant::factory()->for($match)->create(['sku' => 'SG-EAR-01']);
+        $other = Product::factory()->published()->create(['slug' => 'velvet-lip']);
+        ProductVariant::factory()->for($other)->create(['sku' => 'SG-MK-01']);
+
+        $this->getJson('/api/v1/products?q=pearl')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'pearl-drop');
+
+        $this->getJson('/api/v1/products?q=SG-MK-01')
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'velvet-lip');
+    }
+
     public function test_index_returns_only_published_products_with_sellable_variants(): void
     {
         $published = Product::factory()->published()->create(['slug' => 'daily-glow']);

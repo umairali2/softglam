@@ -22,6 +22,15 @@ class ProductController extends Controller
                     fn (Builder $q) => $q->where('slug', $slug),
                 ),
             )
+            ->when(
+                $request->query('q'),
+                fn (Builder $query, string $term) => $query->where(
+                    fn (Builder $q) => $q
+                        ->where('title', 'like', "%{$term}%")
+                        ->orWhere('subtitle', 'like', "%{$term}%")
+                        ->orWhereHas('variants', fn (Builder $v) => $v->where('sku', 'like', "%{$term}%")),
+                ),
+            )
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->cursorPaginate(20);
