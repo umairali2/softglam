@@ -173,6 +173,18 @@ class CheckoutTest extends TestCase
         Mail::assertQueued(OrderPlacedMail::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
 
+    public function test_checkout_requires_a_valid_pakistani_mobile(): void
+    {
+        $this->addToCart(1);
+
+        $this->postJson('/api/v1/checkout', $this->checkoutPayload(['contact_phone' => '12345']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('contact_phone');
+
+        $this->postJson('/api/v1/checkout', $this->checkoutPayload(['contact_phone' => '+92-300-7654321']))
+            ->assertCreated();
+    }
+
     public function test_cod_is_blocked_after_two_staff_declines(): void
     {
         foreach (range(1, 2) as $i) {
