@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Actions\Orders\FulfillOrder;
 use App\Actions\Orders\ReleaseOrderReservation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
@@ -56,6 +57,58 @@ class OrderVerificationController extends Controller
             $order->update([
                 'status' => OrderStatus::Cancelled,
                 'status_reason' => $validated['reason'],
+            ]);
+        }, 3);
+
+        return new OrderResource($order->fresh()->load('items'));
+    }
+
+    public function fulfill(Request $request, Order $order, FulfillOrder $fulfill): OrderResource
+    {
+        $validated = $request->validate([
+            'courier_name' => ['nullable', 'string', 'max:80'],
+            'tracking_number' => ['nullable', 'string', 'max:80'],
+        ]);
+
+        if ($order->status !== OrderStatus::Confirmed) {
+            throw ValidationException::withMessages([
+                'status' => ['Only confirmed orders can be fulfilled.'],
+            ]);
+        }
+
+        DB::transaction(function () use ($order, $fulfill, $validated): void {
+            $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $fulfill->handle($order);
+            $order->update([
+                'status' => OrderStatus::Fulfilled,
+                'courier_name' => $validated['courier_name'] ?? null,
+                'tracking_number' => $validated['tracking_number'] ?? null,
+                'fulfilled_at' => now(),
+            ]);
+        }, 3);
+
+        return new OrderResource($order->fresh()->load('items'));
+    }
+
+    public function cancel(Request $request, Order $order, ReleaseOrderReservation $release): OrderResource
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        if (in_array($order->status, [OrderStatus::Fulfilled, OrderStatus::Cancelled])) {
+            throw ValidationException::withMessages([
+                'status' => ['Fulfilled or cancelled orders cannot be cancelled.'],
+            ]);
+        }
+
+        DB::transaction(function () use ($order, $release, $validated): void {
+            $order = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $release->handle($order, 'order_cancelled');
+            $order->update([
+                'status' => OrderStatus::Cancelled,
+                'status_reason' => $validated['reason'],
+                'cancelled_at' => now(),
             ]);
         }, 3);
 

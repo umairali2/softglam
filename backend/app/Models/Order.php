@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['order_number', 'cart_id', 'user_id', 'status', 'payment_method', 'contact_email', 'contact_phone', 'shipping_address', 'subtotal_amount', 'shipping_amount', 'total_amount', 'currency', 'verification_deadline_at', 'status_reason'])]
+#[Fillable(['order_number', 'cart_id', 'user_id', 'status', 'payment_method', 'contact_email', 'contact_phone', 'shipping_address', 'subtotal_amount', 'shipping_amount', 'total_amount', 'currency', 'verification_deadline_at', 'status_reason', 'courier_name', 'tracking_number', 'fulfilled_at', 'cancelled_at'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -42,6 +42,8 @@ class Order extends Model
             'shipping_amount' => 'integer',
             'total_amount' => 'integer',
             'verification_deadline_at' => 'datetime',
+            'fulfilled_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 }

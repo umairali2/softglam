@@ -30,6 +30,9 @@ class OrderResource extends JsonResource
                 'currency' => $this->currency,
             ],
             'verification_deadline_at' => $this->verification_deadline_at?->toISOString(),
+            'courier_name' => $this->courier_name,
+            'tracking_number' => $this->tracking_number,
+            'fulfilled_at' => $this->fulfilled_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

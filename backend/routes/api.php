@@ -57,6 +57,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('orders', [AdminOrderVerificationController::class, 'index'])->name('orders.index');
             Route::post('orders/{order}/confirm', [AdminOrderVerificationController::class, 'confirm'])->name('orders.confirm');
             Route::post('orders/{order}/decline', [AdminOrderVerificationController::class, 'decline'])->name('orders.decline');
+            Route::post('orders/{order}/fulfill', [AdminOrderVerificationController::class, 'fulfill'])->name('orders.fulfill');
+            Route::post('orders/{order}/cancel', [AdminOrderVerificationController::class, 'cancel'])->name('orders.cancel');
         });
     });
 });

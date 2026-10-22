@@ -141,6 +141,75 @@ class OrderVerificationTest extends TestCase
         $this->assertSame(1, $this->inventoryItem->fresh()->reserved);
     }
 
+    public function test_staff_can_fulfill_a_confirmed_order(): void
+    {
+        $order = $this->placeOrder(3);
+        $this->login($this->staff);
+        $this->postJson("/api/v1/admin/orders/{$order->id}/confirm")->assertOk();
+
+        $this->postJson("/api/v1/admin/orders/{$order->id}/fulfill", [
+            'courier_name' => 'TCS',
+            'tracking_number' => '123456789',
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'fulfilled')
+            ->assertJsonPath('data.tracking_number', '123456789');
+
+        $item = $this->inventoryItem->fresh();
+        $this->assertSame(7, $item->on_hand);
+        $this->assertSame(0, $item->reserved);
+        $this->assertDatabaseHas('inventory_movements', [
+            'type' => 'sale',
+            'on_hand_delta' => -3,
+            'reserved_delta' => -3,
+            'reference_id' => $order->id,
+        ]);
+        $this->assertNotNull($order->fresh()->fulfilled_at);
+    }
+
+    public function test_pending_orders_cannot_be_fulfilled(): void
+    {
+        $order = $this->placeOrder(1);
+        $this->login($this->staff);
+
+        $this->postJson("/api/v1/admin/orders/{$order->id}/fulfill", [])
+            ->assertUnprocessable();
+        $this->assertSame(10, $this->inventoryItem->fresh()->on_hand);
+        $this->assertSame(1, $this->inventoryItem->fresh()->reserved);
+    }
+
+    public function test_staff_can_cancel_a_confirmed_order_and_stock_is_released(): void
+    {
+        $order = $this->placeOrder(2);
+        $this->login($this->staff);
+        $this->postJson("/api/v1/admin/orders/{$order->id}/confirm")->assertOk();
+
+        $this->postJson("/api/v1/admin/orders/{$order->id}/cancel", [
+            'reason' => 'Customer requested cancellation',
+        ])->assertOk()->assertJsonPath('data.status', 'cancelled');
+
+        $order->refresh();
+        $this->assertSame('Customer requested cancellation', $order->status_reason);
+        $this->assertNotNull($order->cancelled_at);
+        $this->assertSame(10, $this->inventoryItem->fresh()->on_hand);
+        $this->assertSame(0, $this->inventoryItem->fresh()->reserved);
+        $this->assertDatabaseHas('inventory_movements', [
+            'type' => 'release',
+            'reason_code' => 'order_cancelled',
+            'reference_id' => $order->id,
+        ]);
+    }
+
+    public function test_fulfilled_orders_cannot_be_cancelled(): void
+    {
+        $order = $this->placeOrder(1);
+        $this->login($this->staff);
+        $this->postJson("/api/v1/admin/orders/{$order->id}/confirm")->assertOk();
+        $this->postJson("/api/v1/admin/orders/{$order->id}/fulfill")->assertOk();
+
+        $this->postJson("/api/v1/admin/orders/{$order->id}/cancel", ['reason' => 'Too late'])
+            ->assertUnprocessable();
+    }
+
     public function test_customers_and_guests_cannot_access_the_admin_queue(): void
     {
         $this->getJson('/api/v1/admin/orders')->assertUnauthorized();
